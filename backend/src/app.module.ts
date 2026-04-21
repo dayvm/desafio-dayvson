@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { FilesController } from './files.controller';
 import { PrismaModule } from './prisma/prisma.module'; // <-- Adicionado!
 import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -20,7 +21,7 @@ import { join } from 'path';
     }),
     AuthModule, UsersModule, CategoriesModule, ProductsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, FilesController],
   providers: [AppService],
 })
 export class AppModule {}
