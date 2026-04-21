@@ -30,13 +30,12 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      // 2. A tela chama apenas o serviço.
       const responseData = await authService.login(data);
 
-      // 3. Salva o token
-      localStorage.setItem('token', responseData.access_token);
+      // Substituímos o localStorage pelo Cookie. 
+      // A flag path=/ indica que o sistema inteiro tem acesso a esse cookie.
+      document.cookie = `token=${responseData.access_token}; path=/; max-age=86400`; 
       
-      // 4. Redireciona
       router.push('/dashboard'); 
       
     } catch (error: any) {
