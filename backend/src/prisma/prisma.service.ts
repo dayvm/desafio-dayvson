@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 
 @Injectable()
@@ -26,11 +26,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       user,
       password,
       database,
-      connectionLimit: 5,
-      allowPublicKeyRetrieval: true, 
+      max: 5,
     };
 
-    const adapter = new PrismaMariaDb(poolConfig);
+    const adapter = new PrismaPg(poolConfig);
 
     super({
       adapter,
