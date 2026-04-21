@@ -6,7 +6,7 @@ import { Button, Card, FlexContainer, InputText, InputPassword, TextLink, Typogr
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
+import { authService } from "../../../services/auth.service";
 // Importamos nossas validações reais do projeto
 import { emailSchema } from "../../../infrastructure/validations/email";
 import { passwordSchema } from "@/src/infrastructure/validations/password";
@@ -26,15 +26,25 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    console.log("Dados que vão pro Back-end:", data);
     
-    // Simulação de chamada na API
-    setTimeout(() => {
+    try {
+      // 2. A tela chama apenas o serviço.
+      const responseData = await authService.login(data);
+
+      // 3. Salva o token
+      localStorage.setItem('token', responseData.access_token);
+      
+      // 4. Redireciona
+      router.push('/dashboard'); 
+      
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Erro ao realizar login. Verifique suas credenciais.');
+    } finally {
       setIsLoading(false);
-      alert(`Login testado com o email: ${data.email}`);
-    }, 1500);
+    }
   };
 
   return (
