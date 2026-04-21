@@ -2,38 +2,23 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-
+import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(configService: ConfigService) {
-    const host = configService.get<string>('DB_HOST');
-    const port = configService.get<number>('DB_PORT');
-    const user = configService.get<string>('DB_USER');
-    const password = configService.get<string>('DB_PASSWORD');
-    const database = configService.get<string>('DB_NAME');
+    const connectionString = configService.get<string>('DATABASE_URL');
 
-    if (!host || !port || !user || !password || !database) {
-      throw new Error('Database connection details are not fully set in environment variables.');
+    if (!connectionString) {
+      throw new Error('DATABASE_URL não encontrada nas variáveis de ambiente.');
     }
 
-    
-    const poolConfig = {
-      host,
-      port,
-      user,
-      password,
-      database,
-      max: 5,
-    };
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
 
-    const adapter = new PrismaPg(poolConfig);
-
-    super({
-      adapter,
-    });
+    super({ adapter });
   }
 
   async onModuleInit() {
