@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Importação obrigatória do Design System de Pernambuco */
+@import '@uigovpe/styles';
+
+body {
+  background-color: var(--color-background-default, #f3f4f6);
+  color: var(--color-text-default, #1f2937);
+}
