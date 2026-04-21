@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { UiProvider, LayoutProvider, GovBar } from "@uigovpe/components";
+import { GovBar, LayoutProvider, UiProvider } from "@uigovpe/components";
 import "./globals.css";
 
-// Configuração da fonte Inter recomendada pelo DS
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,12 +18,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased`}>
-        {/* GovBar OBRIGATÓRIA como primeiro elemento da interface */}
-        <GovBar />
-
-        {/* Providers globais do Design System */}
         <LayoutProvider template="backoffice" breakpoint={1024}>
           <UiProvider>
+            <GovBar />
             {children}
           </UiProvider>
         </LayoutProvider>

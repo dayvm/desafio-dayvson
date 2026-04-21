@@ -1,70 +1,71 @@
 'use client'
 
-import { AdminSideBar, AdminUserBar, SidebarSectionProps } from "@uigovpe/components";
+import {
+  AdminSideBar,
+  AdminUserBar,
+  AppLayout,
+  SidebarSectionProps,
+} from "@uigovpe/components";
 
 export default function ProtectedLayout({
-    children,
+  children,
 }: Readonly<{
-    children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-    // 1. Mock do Usuário (No futuro, você vai pegar isso do estado global ou decodificar do JWT)
-    // 1. Mock do Usuário ajustado para a tipagem exata
-    const mockUser = {
-        name: "Dayvson",
-        role: "Administrador",
-        profile: "DM" // Trocado para 'profile', conforme exigido pelo type 'User'
-    };
+  const mockUser = {
+    name: "Dayvson",
+    role: "Administrador",
+    profile: "DM",
+  };
 
-    // 2. Mock das Seções da Barra Lateral ajustado
-    // Agora o TypeScript sabe que os ícones não são strings genéricas, mas sim do tipo IconName
   const sidebarSections: SidebarSectionProps[] = [
     {
       id: "section-gestao",
-      title: "Gestão",
+      title: "Gestao",
       items: [
-        { 
-          id: "menu-dashboard", 
-          label: "Dashboard", 
-          icon: "dashboard", 
+        {
+          id: "menu-dashboard",
+          label: "Dashboard",
+          icon: "dashboard",
           link: "/dashboard",
         },
-        { 
+        {
           id: "menu-categorias",
-          label: "Categorias", 
-          icon: "category", 
+          label: "Categorias",
+          icon: "category",
           link: "/categorias",
         },
-        { 
+        {
           id: "menu-produtos",
-          label: "Produtos", 
-          icon: "inventory_2", 
+          label: "Produtos",
+          icon: "inventory_2",
           link: "/produtos",
         },
-        { 
+        {
           id: "menu-usuarios",
-          label: "Usuários", 
-          icon: "group", 
+          label: "Usuarios",
+          icon: "group",
           link: "/usuarios",
         },
-      ]
-    }
+      ],
+    },
   ];
 
-    return (
-        <div className="flex min-h-[calc(100vh-60px)] bg-gray-50">
+  return (
+    <AppLayout>
+      <AppLayout.MainLayout>
+        <AdminSideBar sections={sidebarSections} />
 
-            {/* Agora passamos a prop sections obrigatória */}
-            <AdminSideBar sections={sidebarSections} />
+        <AppLayout.ContentSection>
+          <AdminUserBar user={mockUser} />
 
-            <div className="flex-1 flex flex-col min-w-0">
-
-                {/* Passamos a prop user obrigatória */}
-                <AdminUserBar user={mockUser} />
-
-                <main className="flex-1 p-6 md:p-8">
-                    {children}
-                </main>
-            </div>
-        </div>
-    );
+          <AppLayout.MainContent>
+            <AppLayout.PageContent className="bg-gray-50">
+              {children}
+            </AppLayout.PageContent>
+          </AppLayout.MainContent>
+        </AppLayout.ContentSection>
+      </AppLayout.MainLayout>
+    </AppLayout>
+  );
 }
