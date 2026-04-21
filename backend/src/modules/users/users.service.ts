@@ -39,4 +39,10 @@ export class UsersService {
     await this.findOne(id); // Usa o método acima para garantir que existe
     return this.usersRepository.delete(id);
   }
+
+  async updateAvatar(id: string, file: Express.Multer.File) {
+    // Monta a URL pública que o front-end vai usar
+    const avatarUrl = `/uploads/avatars/${file.filename}`;
+    return this.usersRepository.updateAvatar(id, avatarUrl);
+  }
 }

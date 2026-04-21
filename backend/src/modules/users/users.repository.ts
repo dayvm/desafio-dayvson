@@ -30,4 +30,12 @@ export class UsersRepository {
   async delete(id: string) {
     return this.prisma.user.delete({ where: { id } });
   }
+
+  async updateAvatar(id: string, avatarUrl: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { avatarUrl },
+      select: { id: true, name: true, email: true, avatarUrl: true }, // Retorna sem a senha
+    });
+  }
 }

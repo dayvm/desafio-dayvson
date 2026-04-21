@@ -6,11 +6,17 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module'; // <-- Adicionado!
 import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), 
     PrismaModule, // <-- O Prisma agora é injetado globalmente
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     AuthModule, UsersModule, CategoriesModule,
   ],
   controllers: [AppController],
