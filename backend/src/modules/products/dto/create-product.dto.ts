@@ -65,4 +65,7 @@ export class CreateProductDto {
   @IsUUID('4', { each: true, message: 'Cada categoria deve ser um UUID válido.' })
   @IsOptional()
   categoryIds?: string[];
+
+  @IsOptional()
+  file?: Express.Multer.File;
 }
