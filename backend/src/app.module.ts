@@ -5,12 +5,13 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module'; // <-- Adicionado!
 import { UsersModule } from './modules/users/users.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), 
     PrismaModule, // <-- O Prisma agora é injetado globalmente
-    AuthModule, UsersModule,
+    AuthModule, UsersModule, CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
