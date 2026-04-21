@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+
+  @@map("roles")
+}
+
+enum ActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+
+  @@map("action_types")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String?
+  email      String   @unique
+  password   String
+  role       Role     @default(USER)
+  avatarUrl  String?  @map("avatar_url")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  products      Product[]
+  categories    Category[]
+  favorites     Favorite[]
+  auditLogs     AuditLog[]
+  notifications Notification[] @relation("Recipient")
+  actions       Notification[] @relation("Actor")
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  ownerId     String   @map("owner_id")
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  products    ProductCategory[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  imageUrl    String?  @map("image_url")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  ownerId     String   @map("owner_id")
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  categories  ProductCategory[]
+  favoritedBy Favorite[]
+
+  @@map("products")
+}
+
+// Relacionamento explícito: Um produto pode ter várias categorias
+model ProductCategory {
+  productId  String   @map("product_id")
+  categoryId String   @map("category_id")
+  
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@map("product_categories")
+}
+
+// Relacionamento explícito: Favoritos do usuário
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  actorId     String     @map("actor_id")
+  action      ActionType
+  entityType  String?    @map("entity_type")
+  entityId    String?    @map("entity_id")
+  metadata    Json?      // Valores antigos vs novos
+  
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  actor       User       @relation(fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  recipientId String    @map("recipient_id")
+  actorId     String?   @map("actor_id")
+  type        String?   // Ex: "FAVORITE_ADDED"
+  entityType  String?   @map("entity_type") // Ex: "Product"
+  entityId    String?   @map("entity_id")
+  title       String
+  message     String
+  readAt      DateTime? @map("read_at")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  recipient   User      @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User?     @relation("Actor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
