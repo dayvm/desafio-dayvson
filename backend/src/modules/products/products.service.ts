@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -120,6 +122,34 @@ export class ProductsService {
     }
 
     return deletedProduct;
+  }
+
+  async favorite(id: string, userId: string) {
+    const product = await this.findOne(id);
+
+    if (product.ownerId === userId) {
+      throw new BadRequestException('Você não pode favoritar o seu próprio produto.');
+    }
+
+    const existingFavorite = await this.productsRepository.findFavorite(userId, id);
+
+    if (existingFavorite) {
+      throw new ConflictException('Este produto já está nos seus favoritos.');
+    }
+
+    return this.productsRepository.createFavorite(userId, id);
+  }
+
+  async unfavorite(id: string, userId: string) {
+    await this.findOne(id);
+
+    const existingFavorite = await this.productsRepository.findFavorite(userId, id);
+
+    if (!existingFavorite) {
+      throw new NotFoundException('Este produto não está nos seus favoritos.');
+    }
+
+    return this.productsRepository.deleteFavorite(userId, id);
   }
 
   private async deleteImageFile(imageUrl: string) {

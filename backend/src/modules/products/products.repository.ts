@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, Product } from '@prisma/client';
+import { Favorite, Prisma, Product } from '@prisma/client';
 import { ListProductsDto } from './dto/list-products.dto';
 
 @Injectable()
@@ -126,6 +126,37 @@ export class ProductsRepository {
   async delete(id: string) {
     return this.prisma.product.delete({
       where: { id },
+    });
+  }
+
+  async findFavorite(userId: string, productId: string): Promise<Favorite | null> {
+    return this.prisma.favorite.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+  }
+
+  async createFavorite(userId: string, productId: string): Promise<Favorite> {
+    return this.prisma.favorite.create({
+      data: {
+        userId,
+        productId,
+      },
+    });
+  }
+
+  async deleteFavorite(userId: string, productId: string): Promise<Favorite> {
+    return this.prisma.favorite.delete({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
     });
   }
 

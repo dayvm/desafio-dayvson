@@ -109,4 +109,14 @@ export class ProductsController {
   remove(@Param('id', new ParseUUIDPipe()) id: string, @Request() req: AuthenticatedRequest) {
     return this.productsService.remove(id, req.user.userId, req.user.role);
   }
+
+  @Post(':id/favorite')
+  favorite(@Param('id', new ParseUUIDPipe()) id: string, @Request() req: AuthenticatedRequest) {
+    return this.productsService.favorite(id, req.user.userId);
+  }
+
+  @Delete(':id/favorite')
+  unfavorite(@Param('id', new ParseUUIDPipe()) id: string, @Request() req: AuthenticatedRequest) {
+    return this.productsService.unfavorite(id, req.user.userId);
+  }
 }
