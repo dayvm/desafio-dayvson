@@ -2,11 +2,12 @@ import { Controller, Post, Body, Get, Request, UseGuards, HttpCode, HttpStatus }
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SignInDto } from './dto/sign-in.dto'; // <-- Importe o DTO
+import { AuditAction } from 'src/common/decorators/audit-action.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-
+  @AuditAction('LOGIN')
   @HttpCode(HttpStatus.OK)
   @Post('login')
   // Substituímos o Record<string, any> pelo SignInDto
