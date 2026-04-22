@@ -1,6 +1,7 @@
-import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { CreateCategoryDto } from './dto/create-category.dto';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CategoriesRepository } from './categories.repository';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -16,7 +17,7 @@ export class CategoriesService {
     return this.categoriesRepository.create({
       name: createCategoryDto.name,
       description: createCategoryDto.description,
-      ownerId: userId, // O ID vem do Controller, que pegou do Token JWT
+      ownerId: userId,
     });
   }
 
@@ -26,14 +27,17 @@ export class CategoriesService {
 
   async findOne(id: string) {
     const category = await this.categoriesRepository.findById(id);
-    if (!category) throw new NotFoundException('Categoria não encontrada.');
+
+    if (!category) {
+      throw new NotFoundException('Categoria não encontrada.');
+    }
+
     return category;
   }
 
   async remove(id: string, userId: string, userRole: string) {
     const category = await this.findOne(id);
 
-    // Regra: Só pode deletar se for o dono da categoria OU se for um ADMIN
     if (category.ownerId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException('Você não tem permissão para deletar esta categoria.');
     }
@@ -41,11 +45,21 @@ export class CategoriesService {
     return this.categoriesRepository.delete(id);
   }
 
-  async update(id: string, updateCategoryDto: any) {
-    try {
-      return await this.categoriesRepository.update(id, updateCategoryDto);
-    } catch (error) {
-      throw new NotFoundException('Categoria não encontrada para atualização.');
+  async update(id: string, updateCategoryDto: UpdateCategoryDto, userId: string, userRole: string) {
+    const category = await this.findOne(id);
+
+    if (category.ownerId !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException('Você não tem permissão para editar esta categoria.');
     }
+
+    if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
+      const categoryWithSameName = await this.categoriesRepository.findByName(updateCategoryDto.name);
+
+      if (categoryWithSameName && categoryWithSameName.id !== id) {
+        throw new ConflictException('Já existe uma categoria com este nome.');
+      }
+    }
+
+    return this.categoriesRepository.update(id, updateCategoryDto);
   }
 }

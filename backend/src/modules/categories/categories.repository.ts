@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Category, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, Category } from '@prisma/client';
 
 @Injectable()
 export class CategoriesRepository {
@@ -12,7 +12,7 @@ export class CategoriesRepository {
 
   async findAll() {
     return this.prisma.category.findMany({
-      include: { owner: { select: { name: true, email: true } } }, // Já traz quem criou
+      include: { owner: { select: { name: true, email: true } } },
     });
   }
 
@@ -28,7 +28,7 @@ export class CategoriesRepository {
     return this.prisma.category.delete({ where: { id } });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Prisma.CategoryUpdateInput) {
     return this.prisma.category.update({
       where: { id },
       data,

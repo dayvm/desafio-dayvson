@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service'; // Ajuste o caminho se necessário
 import { Prisma, User } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class UsersRepository {
@@ -35,11 +35,11 @@ export class UsersRepository {
     return this.prisma.user.update({
       where: { id },
       data: { avatarUrl },
-      select: { id: true, name: true, email: true, avatarUrl: true }, // Retorna sem a senha
+      select: { id: true, name: true, email: true, avatarUrl: true },
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Prisma.UserUpdateInput) {
     return this.prisma.user.update({
       where: { id },
       data,
