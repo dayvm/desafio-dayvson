@@ -137,13 +137,25 @@ export default function ProtectedLayout({
                 name: currentUser?.name || currentUser?.email || 'Usuário',
                 profile: mapRoleLabel(currentUser?.role),
               }}
+              // A propriedade correta fica do lado de fora do objeto user:
+              avatarImage={
+                currentUser?.avatarUrl 
+                  ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/files/image?path=${encodeURIComponent(currentUser.avatarUrl)}`
+                  : undefined
+              }
+              avatarIcon="person" // Ícone padrão caso a imagem falhe ou não exista
               menuActions={[
+                {
+                  label: 'Meu Perfil',
+                  command: () => router.push('/perfil'), // <-- PORTA DE ENTRADA AQUI!
+                },
                 {
                   label: 'Sair',
                   command: handleLogout,
                 },
               ]}
             />
+            /
 
             <div className="pointer-events-none absolute right-20 top-1/2 z-20 hidden -translate-y-1/2 lg:block">
               <div className="pointer-events-auto">
@@ -165,3 +177,4 @@ export default function ProtectedLayout({
     </AppLayout>
   );
 }
+

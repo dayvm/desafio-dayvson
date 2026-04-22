@@ -43,4 +43,16 @@ export const usersService = {
     const response = await apiClient.delete(`/users/${id}`);
     return response.data;
   },
+
+  async uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('file', file); // O nome 'file' é obrigatório pois o back-end espera isso
+
+    const response = await apiClient.patch('/users/me/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 };
