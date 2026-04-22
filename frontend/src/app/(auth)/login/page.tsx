@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, FlexContainer, InputText, InputPassword, TextLink, Typography } from "@uigovpe/components";
+import { Button, Card, FlexContainer, InputPassword, InputText, TextLink, Typography } from "@uigovpe/components";
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from "../../../services/auth.service";
-// Importamos nossas validações reais do projeto
 import { emailSchema } from "../../../infrastructure/validations/email";
 import { passwordSchema } from "@/src/infrastructure/validations/password";
 
@@ -22,22 +21,21 @@ export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    
+
     try {
       const responseData = await authService.login(data);
-
-      // Substituímos o localStorage pelo Cookie. 
-      // A flag path=/ indica que o sistema inteiro tem acesso a esse cookie.
-      document.cookie = `token=${responseData.access_token}; path=/; max-age=86400`; 
-      
-      router.push('/dashboard'); 
-      
+      authService.persistSession(responseData.access_token, responseData.user);
+      router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
       alert(error.response?.data?.message || 'Erro ao realizar login. Verifique suas credenciais.');
@@ -57,7 +55,6 @@ export default function Login() {
         <Card title="Login">
           <form onSubmit={handleSubmit(onSubmit)}>
             <FlexContainer direction="col" gap="4" justify="center" align="start">
-              
               <div className="w-full">
                 <Controller
                   name="email"
@@ -100,7 +97,6 @@ export default function Login() {
               </Typography>
 
               <Button type="submit" label="Entrar" className="w-full" loading={isLoading} />
-
             </FlexContainer>
           </form>
         </Card>

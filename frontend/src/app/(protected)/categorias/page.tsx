@@ -1,13 +1,20 @@
 'use client'
 
-import { useEffect, useState } from "react";
-import { Button, Card, Typography, Dialog, InputText, InputTextarea, FlexContainer } from "@uigovpe/components";
-import { categoriesService, Category } from "../../../services/categories.service";
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Card,
+  Dialog,
+  FlexContainer,
+  InputText,
+  InputTextarea,
+  Typography,
+} from "@uigovpe/components";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Category, categoriesService } from "../../../services/categories.service";
 
-// 1. Schema de Validação (Regras de negócio do front-end)
 const categorySchema = z.object({
   name: z.string().min(1, "O nome da categoria é obrigatório"),
   description: z.string().optional(),
@@ -18,24 +25,38 @@ type CategoryFormData = z.infer<typeof categorySchema>;
 export default function CategoriasPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Controle do Modal (Dialog)
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Configuração do Formulário
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormData>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: "", description: "" }
+    defaultValues: { name: "", description: "" },
   });
+
+  const dialogTitle = useMemo(
+    () => (editingCategory ? "Editar Categoria" : "Criar Nova Categoria"),
+    [editingCategory],
+  );
 
   const fetchCategories = async () => {
     setIsLoading(true);
+    setFeedback(null);
+
     try {
       const data = await categoriesService.findAll();
       setCategories(data);
-    } catch (error) {
-      console.error("Erro ao buscar categorias:", error);
+    } catch (error: any) {
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Erro ao buscar categorias.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -45,42 +66,69 @@ export default function CategoriasPage() {
     fetchCategories();
   }, []);
 
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    reset({
+      name: category.name,
+      description: category.description || "",
+    });
+    setFeedback(null);
+    setIsDialogVisible(true);
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
+    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) {
+      return;
+    }
+
     try {
       await categoriesService.remove(id);
-      fetchCategories(); 
+      setFeedback({ type: "success", message: "Categoria excluída com sucesso." });
+      fetchCategories();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Erro ao excluir categoria.");
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Erro ao excluir categoria.",
+      });
     }
   };
 
-  // 2. Função disparada ao salvar o formulário
   const onSubmit = async (data: CategoryFormData) => {
     setIsSaving(true);
+    setFeedback(null);
+
     try {
-      await categoriesService.create(data);
-      setIsDialogVisible(false); // Fecha o modal
-      reset(); // Limpa os campos do formulário
-      fetchCategories(); // Recarrega a tabela com a nova categoria
+      if (editingCategory) {
+        await categoriesService.update(editingCategory.id, data);
+        setFeedback({ type: "success", message: "Categoria atualizada com sucesso." });
+      } else {
+        await categoriesService.create(data);
+        setFeedback({ type: "success", message: "Categoria criada com sucesso." });
+      }
+
+      closeDialog();
+      fetchCategories();
     } catch (error: any) {
-      console.error(error);
-      alert(error.response?.data?.message || "Erro ao criar categoria.");
+      setFeedback({
+        type: "error",
+        message:
+          error.response?.data?.message ||
+          (editingCategory ? "Erro ao atualizar categoria." : "Erro ao criar categoria."),
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Função para fechar o modal e limpar os dados
-  const fecharModal = () => {
+  const closeDialog = () => {
     setIsDialogVisible(false);
-    reset();
+    setEditingCategory(null);
+    reset({ name: "", description: "" });
   };
 
   return (
     <div className="w-full">
-      {/* Cabeçalho da Página */}
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Typography variant="h3" size="xl" fontWeight="bold">
             Categorias
@@ -89,15 +137,30 @@ export default function CategoriasPage() {
             Gerencie as categorias dos produtos do sistema.
           </Typography>
         </div>
-        
-        <Button 
-          label="Nova Categoria" 
-          icon="add" 
-          onClick={() => setIsDialogVisible(true)} 
+
+        <Button
+          label="Nova Categoria"
+          icon="add"
+          onClick={() => {
+            setEditingCategory(null);
+            reset({ name: "", description: "" });
+            setIsDialogVisible(true);
+          }}
         />
       </div>
 
-      {/* Tabela de Dados */}
+      {feedback ? (
+        <div
+          className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+            feedback.type === "success"
+              ? "border-green-200 bg-green-50 text-green-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      ) : null}
+
       <Card>
         {isLoading ? (
           <div className="p-8 text-center text-gray-500">Carregando categorias...</div>
@@ -105,29 +168,36 @@ export default function CategoriasPage() {
           <div className="p-8 text-center text-gray-500">Nenhuma categoria encontrada.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="p-4 font-semibold text-gray-700">Nome</th>
                   <th className="p-4 font-semibold text-gray-700">Descrição</th>
                   <th className="p-4 font-semibold text-gray-700">Criado por</th>
-                  <th className="p-4 font-semibold text-gray-700 text-right">Ações</th>
+                  <th className="p-4 text-right font-semibold text-gray-700">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {categories.map((category) => (
-                  <tr key={category.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <tr key={category.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50">
                     <td className="p-4 font-medium text-gray-900">{category.name}</td>
                     <td className="p-4 text-gray-600">{category.description || "-"}</td>
                     <td className="p-4 text-gray-600">{category.owner?.name || "Desconhecido"}</td>
-                    <td className="p-4 text-right">
-                      {/* Corrigido para severity="danger" conforme sua orientação! */}
-                      <Button 
-                        label="Excluir" 
-                        severity="danger" 
-                        outlined /* Adicione variant="text" ou similar se quiser sem fundo, ou deixe o padrão */
-                        onClick={() => handleDelete(category.id)} 
-                      />
+                    <td className="p-4">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          label="Editar"
+                          severity="secondary"
+                          outlined
+                          onClick={() => handleEdit(category)}
+                        />
+                        <Button
+                          label="Excluir"
+                          severity="danger"
+                          outlined
+                          onClick={() => handleDelete(category.id)}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -137,16 +207,14 @@ export default function CategoriasPage() {
         )}
       </Card>
 
-      {/* 3. Modal de Criação (Dialog) */}
-      <Dialog 
-        header="Criar Nova Categoria" 
-        visible={isDialogVisible} 
-        onHide={fecharModal}
-        style={{ width: '450px' }} // O PrimeReact aceita style direto no Dialog
+      <Dialog
+        header={dialogTitle}
+        visible={isDialogVisible}
+        onHide={closeDialog}
+        style={{ width: "450px" }}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
           <FlexContainer direction="col" gap="4">
-            
             <Controller
               name="name"
               control={control}
@@ -174,20 +242,14 @@ export default function CategoriasPage() {
               )}
             />
 
-            <div className="flex justify-end gap-2 mt-4">
-              <Button 
-                label="Cancelar" 
-                severity="secondary" // Usando o padrão de cores do GovPE
-                onClick={fecharModal} 
-                type="button" // Importante para não submeter o form sem querer
-              />
-              <Button 
-                label="Salvar Categoria" 
-                type="submit" 
-                loading={isSaving} 
+            <div className="mt-4 flex justify-end gap-2">
+              <Button label="Cancelar" severity="secondary" onClick={closeDialog} type="button" />
+              <Button
+                label={editingCategory ? "Salvar Alterações" : "Salvar Categoria"}
+                type="submit"
+                loading={isSaving}
               />
             </div>
-
           </FlexContainer>
         </form>
       </Dialog>
