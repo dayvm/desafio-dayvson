@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Desafio Dev Jr - Liga Digital",
+  title: "Desafio Dev Jr - Dayvson M.",
   description: "Sistema de Backoffice com UI-GovPE",
 };
 
