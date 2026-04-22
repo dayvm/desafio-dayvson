@@ -14,4 +14,9 @@ export class AuditService {
       console.error('Falha silenciosa ao registrar log de auditoria:', error);
     }
   }
+  
+  async getLogs(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    return this.auditRepository.findAll(skip, limit);
+  }
 }
