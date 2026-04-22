@@ -31,6 +31,7 @@ export const config = {
     '/dashboard/:path*',
     '/produtos/:path*',
     '/categorias/:path*',
+    '/notificacoes/:path*',
     '/usuarios/:path*',
     '/login'
   ],

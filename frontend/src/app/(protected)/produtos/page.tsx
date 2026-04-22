@@ -145,7 +145,7 @@ export default function ProdutosPage() {
             return (
               <article key={product.id} className="group overflow-hidden rounded-[28px] border border-[#DDE3EC] bg-[#F8FAFC] shadow-[0_10px_28px_rgba(0,26,122,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(0,26,122,0.14)]">
                 <div className="p-3 sm:p-4">
-                  <div className="relative overflow-hidden rounded-[22px] border border-[#DCE3EE] bg-white">
+                  <div className="overflow-hidden rounded-[22px] border border-[#DCE3EE] bg-white ">
                     <div className="aspect-square bg-[#EEF2F7]">
                       <img 
                         src={imageUrl} 
@@ -154,12 +154,6 @@ export default function ProdutosPage() {
                         onError={(e) => { (e.target as HTMLImageElement).src = "/images/default-product.png"; }}
                       />
                     </div>
-                    <button 
-                      onClick={() => handleFavorite(product)}
-                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DCE8] bg-white/95 text-[#28272C] shadow-sm hover:text-red-500 transition-colors"
-                    >
-                      <Icon icon="favorite" />
-                    </button>
                   </div>
 
                   <div className="mt-4 min-w-0">
@@ -171,6 +165,12 @@ export default function ProdutosPage() {
                     <span className="max-w-[50%] truncate rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]">
                       {product.categories?.[0]?.category?.name || "Geral"}
                     </span>
+                    <button 
+                      onClick={() => handleFavorite(product)}
+                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DCE8] bg-white/95 text-[#28272C] shadow-sm hover:text-red-500 transition-colors"
+                    >
+                      <Icon icon="favorite" />
+                    </button>
                     <div className="flex gap-2">
                       {canManage && (
                         <>
