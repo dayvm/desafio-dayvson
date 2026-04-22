@@ -55,10 +55,10 @@ export default function ProdutosPage() {
 
   const fetchProducts = async () => {
     setIsLoading(true);
-
     try {
-      const productsData = await productsService.findAll();
-      setProducts(productsData);
+      // Passamos a ler o .data de dentro do objeto retornado
+      const response = await productsService.findAll();
+      setProducts(response.data); 
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
     } finally {

@@ -53,7 +53,18 @@ export class AuditInterceptor implements NestInterceptor {
         };
 
         // Identifica o usuário (pode vir como userId ou sub no token)
-        const actorId = user?.userId || user?.sub || null;
+        let actorId = user?.userId || user?.sub || null;
+
+        // MÁGICA AQUI: Se for a rota de login, o usuário está na resposta, não na requisição!
+        if (action === 'LOGIN' && response?.user?.id) {
+          actorId = response.user.id;
+        }
+
+        // Trava de segurança: Como o banco exige um actorId, se por algum motivo 
+        // bizarro não encontrarmos quem fez a ação, nós abortamos o log para não quebrar o sistema.
+        if (!actorId) {
+          return;
+        }
 
         // Chama o Service para salvar no banco
         await this.auditService.logAction(actorId, action, entityType, entityId, metadata);
