@@ -24,48 +24,31 @@ export class ProductsRepository {
     });
   }
 
-  async findAll(query: ListProductsDto, ownerId?: string) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+  async findAll(query: ListProductsDto, customOwnerId?: string) {
+    // Desestruturamos usando o 'search' (exatamente como está no seu DTO)
+    const { page = 1, limit = 10, search, categoryId } = query;
     const skip = (page - 1) * limit;
 
+    // Montamos os filtros de forma dinâmica
     const where: Prisma.ProductWhereInput = {
-      ...(ownerId ? { ownerId } : {}),
-      ...(query.search
-        ? {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { description: { contains: query.search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-      ...(query.categoryId
-        ? {
-            categories: {
-              some: {
-                categoryId: query.categoryId,
-              },
-            },
-          }
-        : {}),
+      ...(search && { name: { contains: search, mode: 'insensitive' } }),
+      ...(categoryId && { categories: { some: { categoryId } } }),
+      // Aplica o filtro de dono se ele foi passado pelo service ou pelo findMine
+      ...(customOwnerId && { ownerId: customOwnerId }), 
     };
 
-    const [total, data] = await this.prisma.$transaction([
-      this.prisma.product.count({ where }),
+    const [data, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          owner: { select: { name: true, email: true } },
-          categories: {
-            include: {
-              category: true,
-            },
-          },
+          categories: { include: { category: true } },
+          owner: { select: { id: true, name: true, email: true } },
         },
       }),
+      this.prisma.product.count({ where }),
     ]);
 
     return {
@@ -74,7 +57,7 @@ export class ProductsRepository {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit) || 1,
+        totalPages: Math.ceil(total / limit),
       },
     };
   }

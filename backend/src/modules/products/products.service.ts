@@ -45,8 +45,9 @@ export class ProductsService {
     );
   }
 
-  async findAll(query: ListProductsDto) {
-    return this.productsRepository.findAll(query);
+async findAll(query: ListProductsDto) {
+    // Pegamos o ownerId que veio da URL (se existir) e passamos para o repositório
+    return this.productsRepository.findAll(query, query.ownerId);
   }
 
   async findMine(ownerId: string, query: ListProductsDto) {

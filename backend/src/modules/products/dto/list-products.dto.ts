@@ -30,4 +30,8 @@ export class ListProductsDto {
   @IsUUID('4', { message: 'O categoryId deve ser um UUID válido.' })
   @IsOptional()
   categoryId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string; // <-- Adicione esta linha
 }

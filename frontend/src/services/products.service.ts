@@ -6,10 +6,7 @@ export interface Product {
   name: string;
   description: string | null;
   imageUrl: string | null;
-  price?: string | null; // Adicionado para suportar o preço futuramente
-  categories: {
-    name: string; category: Category 
-}[]; // <-- O Prisma retorna a tabela pivô, então ajustamos a tipagem!
+  categories: { category: Category }[];
   ownerId: string;
   owner?: {
     name: string;
@@ -17,7 +14,6 @@ export interface Product {
   };
 }
 
-// Criamos uma interface para a resposta paginada oficial
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -29,31 +25,45 @@ export interface PaginatedResponse<T> {
 }
 
 export const productsService = {
-  // Ajustado para retornar a interface de paginação
   async findAll(params?: { page?: number; limit?: number; search?: string; categoryId?: string }): Promise<PaginatedResponse<Product>> {
     const response = await apiClient.get('/products', {
-      params, // Permite enviar page, limit e search via URL dinamicamente
+      params,
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
       }
     });
-
-    // Fim da gambiarra. Retornamos o objeto exato que o back-end do NestJS gera.
-    return response.data; 
+    return response.data;
   },
 
   async create(formData: FormData) {
     const response = await apiClient.post('/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // NOVA FUNÇÃO: Edição de Produto
+  async update(id: string, formData: FormData) {
+    const response = await apiClient.patch(`/products/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   },
 
   async remove(id: string) {
     const response = await apiClient.delete(`/products/${id}`);
+    return response.data;
+  },
+
+  // NOVAS FUNÇÕES: Favoritos
+  async favorite(id: string) {
+    const response = await apiClient.post(`/products/${id}/favorite`);
+    return response.data;
+  },
+
+  async unfavorite(id: string) {
+    const response = await apiClient.delete(`/products/${id}/favorite`);
     return response.data;
   }
 };
