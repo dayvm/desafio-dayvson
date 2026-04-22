@@ -11,10 +11,14 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsDto } from './dto/list-products.dto';
 import { ProductsRepository } from './products.repository';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private productsRepository: ProductsRepository) {}
+  constructor(
+    private productsRepository: ProductsRepository,
+    private readonly notificationsService: NotificationsService // 
+  ) { }
 
   async create(createProductDto: CreateProductDto, ownerId: string, file?: Express.Multer.File) {
     const categoryIds = [...new Set(createProductDto.categoryIds || [])];
@@ -132,12 +136,31 @@ export class ProductsService {
     }
 
     const existingFavorite = await this.productsRepository.findFavorite(userId, id);
-
     if (existingFavorite) {
       throw new ConflictException('Este produto já está nos seus favoritos.');
     }
 
-    return this.productsRepository.createFavorite(userId, id);
+    // 4. Salva o favorito no banco
+    const newFavorite = await this.productsRepository.createFavorite(userId, id);
+
+    // 5. DISPARA A NOTIFICAÇÃO (Mágica acontecendo aqui)
+    // Usamos um try/catch silencioso para garantir que, se a notificação falhar por algum motivo, 
+    // não cancele o favorito que acabou de ser salvo com sucesso.
+    try {
+      await this.notificationsService.create({
+        recipientId: product.ownerId,
+        actorId: userId,
+        type: 'FAVORITE_ADDED',
+        entityType: 'Product',
+        entityId: product.id,
+        title: 'Novo Favorito!',
+        message: `Alguém acabou de favoritar o seu produto: ${product.name}`,
+      });
+    } catch (error) {
+      console.error('Falha ao enviar notificação de favorito:', error);
+    }
+
+    return newFavorite;
   }
 
   async unfavorite(id: string, userId: string) {
@@ -149,7 +172,8 @@ export class ProductsService {
       throw new NotFoundException('Este produto não está nos seus favoritos.');
     }
 
-    return this.productsRepository.deleteFavorite(userId, id);
+    // Apenas retornamos a deleção (não precisa de notificação para desfavoritar)
+    return await this.productsRepository.deleteFavorite(userId, id);
   }
 
   private async deleteImageFile(imageUrl: string) {
