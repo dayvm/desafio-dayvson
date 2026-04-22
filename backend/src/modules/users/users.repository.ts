@@ -38,4 +38,11 @@ export class UsersRepository {
       select: { id: true, name: true, email: true, avatarUrl: true }, // Retorna sem a senha
     });
   }
+
+  async update(id: string, data: any) {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
 }

@@ -27,4 +27,11 @@ export class CategoriesRepository {
   async delete(id: string) {
     return this.prisma.category.delete({ where: { id } });
   }
+
+  async update(id: string, data: any) {
+    return this.prisma.category.update({
+      where: { id },
+      data,
+    });
+  }
 }

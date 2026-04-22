@@ -40,4 +40,12 @@ export class CategoriesService {
 
     return this.categoriesRepository.delete(id);
   }
+
+  async update(id: string, updateCategoryDto: any) {
+    try {
+      return await this.categoriesRepository.update(id, updateCategoryDto);
+    } catch (error) {
+      throw new NotFoundException('Categoria não encontrada para atualização.');
+    }
+  }
 }

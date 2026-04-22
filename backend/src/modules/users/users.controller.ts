@@ -74,4 +74,9 @@ export class UsersController {
     // req.user.userId vem do token JWT (o usuário só atualiza o próprio avatar)
     return this.usersService.updateAvatar(req.user.userId, file);
   }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: any) {
+    return this.usersService.update(id, updateUserDto);
+  }
 }

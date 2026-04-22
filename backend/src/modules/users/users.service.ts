@@ -48,4 +48,20 @@ export class UsersService {
     const avatarUrl = `/uploads/avatars/${file.filename}`;
     return this.usersRepository.updateAvatar(id, avatarUrl);
   }
+
+  async update(id: string, updateUserDto: any) {
+    // Regra de Negócio: Se vier senha no payload de atualização, hasheia ela!
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    try {
+      // Devolvemos o usuário atualizado (podemos remover a senha do retorno por segurança se quiser)
+      const updatedUser = await this.usersRepository.update(id, updateUserDto);
+      const { password, ...result } = updatedUser;
+      return result;
+    } catch (error) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+  }
 }
