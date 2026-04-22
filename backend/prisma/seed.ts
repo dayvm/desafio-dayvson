@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
 
 // Puxamos a URL completa que já configuramos no .env e que sabemos que funciona
 const connectionString = process.env.DATABASE_URL;
@@ -30,11 +31,14 @@ async function main() {
       );
     }
 
+    // 1. Hasheia a senha vinda do .env antes de salvar
+    const hashedPassword = await bcrypt.hash(initialAdminPassword, 10);
+
     await prisma.user.create({
       data: {
         name: 'Administrador',
         email: initialAdminEmail,
-        password: initialAdminPassword, // Lembrete: em um ambiente real, isso deveria passar por um hash (ex: bcrypt)
+        password: hashedPassword,
         role: 'ADMIN',
       },
     });

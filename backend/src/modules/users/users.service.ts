@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersRepository } from './users.repository';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -13,11 +14,13 @@ export class UsersService {
     if (userExists) {
       throw new ConflictException('Este email já está em uso.');
     }
+    
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const user = await this.usersRepository.create({
       name: createUserDto.name,
       email: createUserDto.email,
-      password: createUserDto.password, 
+      password: hashedPassword, 
       role: createUserDto.role || 'USER',
     });
 
