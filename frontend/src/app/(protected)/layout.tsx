@@ -63,6 +63,11 @@ export default function ProtectedLayout({
 
     if (pathname.startsWith('/usuarios') && currentUser.role !== 'ADMIN') {
       router.replace('/dashboard');
+      return;
+    }
+
+    if (pathname.startsWith('/relatorios') && currentUser.role !== 'ADMIN') {
+      router.replace('/dashboard');
     }
   }, [currentUser, pathname, router]);
 
@@ -105,6 +110,12 @@ export default function ProtectedLayout({
         label: 'Usuários',
         icon: 'group',
         link: '/usuarios',
+      });
+      managementItems.push({
+        id: 'menu-relatorios',
+        label: 'Relatórios',
+        icon: 'dashboard',
+        link: '/relatorios/auditoria',
       });
     }
 

@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Card,
+  Column,
   Dialog,
   FlexContainer,
+  Icon,
   InputText,
   InputTextarea,
+  Menu,
+  Search,
+  Table,
   Typography,
 } from "@uigovpe/components";
 import { useForm, Controller } from "react-hook-form";
@@ -22,13 +27,20 @@ const categorySchema = z.object({
 
 type CategoryFormData = z.infer<typeof categorySchema>;
 
-export default function CategoriasPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+type CategoryTableRow = Category & {
+  ownerName: string;
+};
+
+export default function CategoriasNovaTabelaPage() {
+  const [categories, setCategories] = useState<CategoryTableRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [selectedRow, setSelectedRow] = useState<CategoryTableRow | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const menuRef = useRef<any>(null);
 
   const {
     control,
@@ -51,7 +63,12 @@ export default function CategoriasPage() {
 
     try {
       const data = await categoriesService.findAll();
-      setCategories(data);
+      const formattedData = data.map((category) => ({
+        ...category,
+        ownerName: category.owner?.name || "Desconhecido",
+      }));
+
+      setCategories(formattedData);
     } catch (error: any) {
       setFeedback({
         type: "error",
@@ -126,6 +143,53 @@ export default function CategoriasPage() {
     reset({ name: "", description: "" });
   };
 
+  const actionMenuItems = [
+    {
+      label: "Editar",
+      icon: <Icon icon="edit" />,
+      command: () => {
+        if (selectedRow) {
+          handleEdit(selectedRow);
+        }
+      },
+    },
+    {
+      label: "Excluir",
+      icon: <Icon icon="delete" />,
+      className: "text-red-600",
+      command: () => {
+        if (selectedRow) {
+          handleDelete(selectedRow.id);
+        }
+      },
+    },
+  ];
+
+  const actionBodyTemplate = (rowData: CategoryTableRow) => {
+    return (
+      <div className="flex justify-center">
+        <Button
+          icon={<Icon icon="more_vert" />}
+          className="p-button-rounded p-button-text border border-gray-300 text-gray-600 hover:bg-gray-100"
+          onClick={(event) => {
+            setSelectedRow(rowData);
+
+            const syntheticEvent = {
+              ...event,
+              currentTarget: event.currentTarget || event.target,
+            };
+
+            requestAnimationFrame(() => {
+              menuRef.current?.toggle(syntheticEvent);
+            });
+          }}
+          aria-controls="popup_menu_categories"
+          aria-haspopup
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="w-full">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -162,49 +226,66 @@ export default function CategoriasPage() {
       ) : null}
 
       <Card>
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Carregando categorias...</div>
-        ) : categories.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">Nenhuma categoria encontrada.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="p-4 font-semibold text-gray-700">Nome</th>
-                  <th className="p-4 font-semibold text-gray-700">Descrição</th>
-                  <th className="p-4 font-semibold text-gray-700">Criado por</th>
-                  <th className="p-4 text-right font-semibold text-gray-700">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((category) => (
-                  <tr key={category.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-900">{category.name}</td>
-                    <td className="p-4 text-gray-600">{category.description || "-"}</td>
-                    <td className="p-4 text-gray-600">{category.owner?.name || "Desconhecido"}</td>
-                    <td className="p-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          label="Editar"
-                          severity="secondary"
-                          outlined
-                          onClick={() => handleEdit(category)}
-                        />
-                        <Button
-                          label="Excluir"
-                          severity="danger"
-                          outlined
-                          onClick={() => handleDelete(category.id)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <h2 className="mb-6 text-xl font-bold text-gray-800">
+          Lista de Categorias
+        </h2>
+
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="w-full md:w-1/2">
+            <Search
+              label="Buscar categoria"
+              placeholder="Ex: Informática ou Nome do responsável"
+              value={globalFilter}
+              onChange={(event: any) => setGlobalFilter(event.value)}
+              showAutocomplete={false}
+              className="w-full [&_label]:text-gray-700 [&_input]:border-gray-300 [&_input]:bg-white [&_input]:text-gray-900"
+            />
           </div>
-        )}
+        </div>
+
+        <div
+          className="
+            [&_.p-datatable-thead_th]:border-b!
+            [&_.p-datatable-thead_th]:border-gray-200!
+            [&_.p-datatable-thead_th]:bg-transparent!
+            [&_.p-datatable-thead_th]:text-[#0034B7]
+            [&_.p-datatable-tbody_tr]:border-none!
+            [&_.p-datatable-tbody_tr]:bg-transparent!
+            [&_.p-datatable-tbody_tr]:text-gray-800!
+            [&_.p-datatable-tbody_tr:nth-child(even)]:bg-gray-50!
+            [&_.p-datatable-tbody_tr:hover]:bg-gray-100!
+          "
+        >
+          <Table
+            value={categories}
+            paginator
+            rows={5}
+            rowsPerPageOptions={[5, 10, 25]}
+            loading={isLoading}
+            globalFilter={globalFilter}
+            globalFilterFields={["name", "description", "ownerName"]}
+            className="w-full"
+            emptyMessage="Nenhuma categoria encontrada."
+            dataKey="id"
+          >
+            <Column field="name" header="Nome" sortable />
+            <Column field="description" header="Descrição" sortable body={(rowData: CategoryTableRow) => rowData.description || "-"} />
+            <Column field="ownerName" header="Criado por" sortable />
+            <Column
+              header="Ação"
+              body={actionBodyTemplate}
+              style={{ width: "80px" }}
+            />
+          </Table>
+        </div>
+
+        <Menu
+          model={actionMenuItems}
+          popup
+          popupAlignment="right"
+          ref={menuRef}
+          id="popup_menu_categories"
+        />
       </Card>
 
       <Dialog

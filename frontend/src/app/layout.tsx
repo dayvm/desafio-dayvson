@@ -3,7 +3,7 @@ import { GovBar, LayoutProvider, UiProvider } from "@uigovpe/components";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Desafio Dev Jr - Liga Digital",
+  title: "Desafio - Dayvson",
   description: "Sistema de Backoffice com UI-GovPE",
 };
 
