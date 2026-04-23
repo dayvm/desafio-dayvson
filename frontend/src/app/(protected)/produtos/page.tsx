@@ -134,7 +134,7 @@ export default function ProdutosPage() {
           </button>
         </header>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 px-1">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-6 px-1">
           {products.map((product) => {
 
             // 🔐 REGRA DE NEGÓCIO (autorização)
