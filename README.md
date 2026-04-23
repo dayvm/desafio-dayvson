@@ -146,6 +146,8 @@ As credenciais do admin inicial são definidas pelas variáveis:
 - `INITIAL_ADMIN_EMAIL`
 - `INITIAL_ADMIN_PASSWORD`
 
+Após subir o projeto e executar o seed, o usuário pode acessar o sistema usando exatamente os valores informados nessas duas variáveis.
+
 ## Modelagem de Dados Resumida
 
 As principais entidades do sistema são:

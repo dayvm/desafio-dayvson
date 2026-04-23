@@ -32,6 +32,7 @@ export const config = {
     '/produtos/:path*',
     '/categorias/:path*',
     '/notificacoes/:path*',
+    '/relatorios/:path*',
     '/usuarios/:path*',
     '/login'
   ],

@@ -71,7 +71,7 @@ export default function ProdutosPage() {
         productsService.findAll(params),
         categoriesService.findAll()
       ]);
-      
+
       setProducts(productsResponse.data);
       setTotalPages(productsResponse.meta.totalPages);
       setCurrentPage(productsResponse.meta.page);
@@ -104,7 +104,7 @@ export default function ProdutosPage() {
 
       if (editingProduct) await productsService.update(editingProduct.id, formData);
       else await productsService.create(formData);
-      
+
       setIsDialogVisible(false);
       loadData(currentPage);
     } catch (e) { alert("Erro ao salvar."); } finally { setIsSaving(false); }
@@ -136,48 +136,134 @@ export default function ProdutosPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-1">
           {products.map((product) => {
+
+            // 🔐 REGRA DE NEGÓCIO (autorização)
             const canManage = currentUserId === product.ownerId || userRole === 'ADMIN';
-            // Lógica da imagem: usa a da API ou a default do front
-            const imageUrl = product.imageUrl 
+
+            // 🖼️ REGRA DE APRESENTAÇÃO (fallback de imagem)
+            const imageUrl = product.imageUrl
               ? `${apiBaseUrl}/files/image?path=${encodeURIComponent(product.imageUrl)}`
-              : "/default-product.png"; 
+              : "/default-product.png";
 
             return (
-              <article key={product.id} className="group overflow-hidden rounded-[28px] border border-[#DDE3EC] bg-[#F8FAFC] shadow-[0_10px_28px_rgba(0,26,122,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(0,26,122,0.14)]">
-                <div className="p-3 sm:p-4">
-                  <div className="overflow-hidden rounded-[22px] border border-[#DCE3EE] bg-white ">
-                    <div className="aspect-square bg-[#EEF2F7]">
-                      <img 
-                        src={imageUrl} 
-                        alt={product.name} 
-                        className="h-full w-full object-cover" 
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/images/default-product.png"; }}
-                      />
+
+              // 🧱 COMPONENTE RAIZ DO CARD
+              <article
+                key={product.id}
+                className="group overflow-hidden rounded-[24px] border border-[#DDE3EC] bg-[#F8FAFC] shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
+              >
+
+                {/* 📦 WRAPPER PRINCIPAL (afastamento interno do card inteiro) */}
+                <div className="p-5 flex flex-col gap-5">
+
+                  {/* 🔳 WRAPPER SUPERIOR (IMAGEM) */}
+                  <div className="flex flex-col">
+
+                    {/* 🖼️ CONTAINER DA IMAGEM */}
+                    <div className=" aspect-square max-h-[360px] mx-auto overflow-hidden rounded-[18px] border border-[#DCE3EE] bg-white">
+
+                      {/* 📐 AREA RESPONSIVA */}
+                      <div className="aspect-square bg-[#EEF2F7]">
+
+                        <img
+                          src={imageUrl}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/images/default-product.png";
+                          }}
+                        />
+
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 min-w-0">
-                    <h2 className="truncate text-[1rem] font-semibold leading-tight text-[#28272C]">{product.name}</h2>
-                    <p className="mt-2 line-clamp-3 text-[0.82rem] leading-5 text-[#494C57]">{product.description || "Sem descrição."}</p>
-                  </div>
+                  {/* 🔻 WRAPPER INFERIOR (TEXTO + RODAPÉ) */}
+                  <div className="flex flex-col justify-between gap-4 flex-1">
 
-                  <div className="mt-4 flex items-center justify-between gap-2">
-                    <span className="max-w-[50%] truncate rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]">
-                      {product.categories?.[0]?.category?.name || "Geral"}
-                    </span>
-                    <button 
-                      onClick={() => handleFavorite(product)}
-                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DCE8] bg-white/95 text-[#28272C] shadow-sm hover:text-red-500 transition-colors"
-                    >
-                      <Icon icon="favorite" />
-                    </button>
-                    <div className="flex gap-2">
-                      {canManage && (
-                        <>
-                          <button onClick={() => { setEditingProduct(product); reset({ name: product.name, description: product.description || "", categoryIds: product.categories.map(c => c.category.id) }); setIsDialogVisible(true); }} className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"><Icon icon="edit" /></button>
-                          <button onClick={() => productsService.remove(product.id).then(() => loadData(currentPage))} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#F2CACA] bg-white text-[#B42318] hover:bg-[#FFF1F1]"><Icon icon="delete" /></button>
-                        </>
-                      )}
+                    {/* 📝 BLOCO DE INFORMAÇÕES TEXTUAIS */}
+                    <div className="min-w-0">
+
+                      {/* 🏷️ NOME DO PRODUTO */}
+                      <h2 className="truncate text-[1.2rem] font-bold leading-snug text-[#28272C]">
+                        {product.name}
+                      </h2>
+
+                      {/* 📄 DESCRIÇÃO */}
+                      <p className="mt-3 line-clamp-4 text-[0.9rem] leading-6 text-[#494C57]">
+                        {product.description || "Sem descrição."}
+                      </p>
+
+                    </div>
+
+                    {/* ⚙️ RODAPÉ DO CARD */}
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+
+                      {/* ❤️ FAVORITAR (AGORA À ESQUERDA) */}
+                      <button
+                        onClick={() => handleFavorite(product)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DCE8] bg-white text-[#28272C] shadow-sm hover:text-red-500 transition-colors"
+                      >
+                        <Icon icon="favorite" />
+                      </button>
+
+                      {/* 🏷️ CATEGORIAS (lado a lado, sem sobreposição) */}
+                      <div className="flex gap-2 flex-wrap flex-1 justify-center">
+
+                        {product.categories?.length ? (
+                          product.categories.map((c) => (
+                            <span
+                              key={c.category.id}
+                              className="whitespace-nowrap rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]"
+                            >
+                              {c.category.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]">
+                            Geral
+                          </span>
+                        )}
+
+                      </div>
+
+                      {/* 🧰 AÇÕES (EDITAR + DELETAR) */}
+                      <div className="flex gap-2">
+
+                        {canManage && (
+                          <>
+                            {/* ✏️ EDITAR */}
+                            <button
+                              onClick={() => {
+                                setEditingProduct(product);
+                                reset({
+                                  name: product.name,
+                                  description: product.description || "",
+                                  categoryIds: product.categories.map(c => c.category.id)
+                                });
+                                setIsDialogVisible(true);
+                              }}
+                              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                            >
+                              <Icon icon="edit" />
+                            </button>
+
+                            {/* 🗑️ DELETAR */}
+                            <button
+                              onClick={() =>
+                                productsService
+                                  .remove(product.id)
+                                  .then(() => loadData(currentPage))
+                              }
+                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#F2CACA] bg-white text-[#B42318] hover:bg-[#FFF1F1]"
+                            >
+                              <Icon icon="delete" />
+                            </button>
+                          </>
+                        )}
+
+                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -240,15 +326,25 @@ export default function ProdutosPage() {
               control={control}
               render={({ field }) => (
                 <div className="w-full">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Categoria</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Categorias
+                  </label>
+
                   <select
-                    value={field.value?.[0] || ""} // Para simplificar o MVP, permitimos escolher 1 na UI
-                    onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                    multiple
+                    value={field.value || []}
+                    onChange={(e) => {
+                      const selectedValues = Array.from(e.target.selectedOptions).map(
+                        (option) => option.value
+                      );
+                      field.onChange(selectedValues);
+                    }}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
                   >
-                    <option value="">Selecione uma categoria...</option>
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
                 </div>
