@@ -282,7 +282,51 @@ export default function ProdutosPage() {
         )}
       </section>
 
-      {/* Botão de Adição Reposicionado para Mobile */}
+      {/* ================================================================= */}
+      {/* 🎯 VARIAÇÕES DO BOTÃO FLUTUANTE (ADICIONAR PRODUTO)                 */}
+      {/* ================================================================= */}
+
+      {/* 🟢 VARIAÇÃO 1: Inline Styles com Força Bruta (ATIVA POR PADRÃO) */}
+      {/* Usa style nativo do React para tentar furar os bloqueios de layout do pai */}
+      <button
+        type="button"
+        onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
+        style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 999999 }}
+        // 👇 Usando a sintaxe [valor] para forçar o tamanho exato em pixels
+        className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-[#BCC9E0] text-white shadow-2xl transition hover:scale-105 active:scale-95"
+      >
+        <Icon icon="add" className="text-[200px] text-white" />
+      </button>
+
+      {/* 🔴 VARIAÇÃO 2: Sticky Positioning (O Salvador de Layouts Quebrados) */}
+      {/* Ele "gruda" na base da tela independente do pai. Geralmente a melhor solução quando o Fixed falha. */}
+      {/*
+      <div className="sticky bottom-8 flex justify-end w-full pr-8 pointer-events-none">
+        <button
+          type="button"
+          onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
+          className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#0034B7] text-white shadow-2xl transition hover:scale-110 active:scale-95"
+        >
+          <Icon icon="add" className="text-3xl" />
+        </button>
+      </div>
+      */}
+
+      {/* 🟡 VARIAÇÃO 3: Fixed ancorado pelo TOPO usando Viewport Height (vh) e (vw) */}
+      {/* Em vez de usar bottom-8, ele calcula 85% da altura da tela real. */}
+      {/*
+      <button
+        type="button"
+        onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
+        className="fixed top-[85vh] right-[5vw] z-[9999] flex h-16 w-16 items-center justify-center rounded-full bg-[#0034B7] text-white shadow-2xl transition hover:scale-110 active:scale-95"
+      >
+        <Icon icon="add" className="text-3xl" />
+      </button>
+      */}
+
+      {/* ⚪ VARIAÇÃO 4: O SEU CÓDIGO ORIGINAL INTACTO */}
+      {/* Para caso você queira voltar ao que estava antes. */}
+      {/*
       <button
         type="button"
         onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
@@ -290,6 +334,9 @@ export default function ProdutosPage() {
       >
         <Icon icon="add" className="text-3xl" />
       </button>
+      */}
+
+      {/* ================================================================= */}
 
       <Dialog
         header={editingProduct ? "Editar Produto" : "Cadastrar Produto"}

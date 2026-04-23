@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Card,
+  Column,
   Dialog,
   FlexContainer,
+  Icon,
   InputPassword,
   InputText,
+  Menu,
+  Search,
+  Table,
   Typography,
 } from "@uigovpe/components";
 import { Controller, useForm } from "react-hook-form";
@@ -31,8 +36,11 @@ export default function UsuariosPage() {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedRow, setSelectedRow] = useState<User | null>(null);
+  const [globalFilter, setGlobalFilter] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const menuRef = useRef<any>(null);
 
   const {
     control,
@@ -164,6 +172,53 @@ export default function UsuariosPage() {
     });
   };
 
+  const actionMenuItems = [
+    {
+      label: "Editar",
+      icon: <Icon icon="edit" />,
+      command: () => {
+        if (selectedRow) {
+          handleEdit(selectedRow);
+        }
+      },
+    },
+    {
+      label: "Excluir",
+      icon: <Icon icon="delete" />,
+      className: "text-red-600",
+      command: () => {
+        if (selectedRow) {
+          handleDelete(selectedRow.id);
+        }
+      },
+    },
+  ];
+
+  const actionBodyTemplate = (rowData: User) => {
+    return (
+      <div className="flex justify-center">
+        <Button
+          icon={<Icon icon="more_vert" />}
+          className="p-button-rounded p-button-text border border-gray-300 text-gray-600 hover:bg-gray-100"
+          onClick={(event) => {
+            setSelectedRow(rowData);
+
+            const syntheticEvent = {
+              ...event,
+              currentTarget: event.currentTarget || event.target,
+            };
+
+            requestAnimationFrame(() => {
+              menuRef.current?.toggle(syntheticEvent);
+            });
+          }}
+          aria-controls="popup_menu_users"
+          aria-haspopup
+        />
+      </div>
+    );
+  };
+
   if (currentRole && currentRole !== "ADMIN") {
     return (
       <Card>
@@ -207,49 +262,71 @@ export default function UsuariosPage() {
       ) : null}
 
       <Card>
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-500">Carregando usuários...</div>
-        ) : users.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">Nenhum usuário encontrado.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="p-4 font-semibold text-gray-700">Nome</th>
-                  <th className="p-4 font-semibold text-gray-700">Email</th>
-                  <th className="p-4 font-semibold text-gray-700">Perfil</th>
-                  <th className="p-4 text-right font-semibold text-gray-700">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-900">{user.name || "-"}</td>
-                    <td className="p-4 text-gray-600">{user.email}</td>
-                    <td className="p-4 text-gray-600">{user.role}</td>
-                    <td className="p-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          label="Editar"
-                          severity="secondary"
-                          outlined
-                          onClick={() => handleEdit(user)}
-                        />
-                        <Button
-                          label="Excluir"
-                          severity="danger"
-                          outlined
-                          onClick={() => handleDelete(user.id)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <h2 className="mb-6 text-xl font-bold text-gray-800">
+          Lista de Usuários
+        </h2>
+
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="w-full md:w-1/2">
+            <Search
+              label="Buscar usuário"
+              placeholder="Ex: Ana, admin@email.com ou ADMIN"
+              value={globalFilter}
+              onChange={(event: any) => setGlobalFilter(event.value)}
+              showAutocomplete={false}
+              className="w-full [&_label]:text-gray-700 [&_input]:border-gray-300 [&_input]:bg-white [&_input]:text-gray-900"
+            />
           </div>
-        )}
+        </div>
+
+        <div
+          className="
+            [&_.p-datatable-thead_th]:border-b!
+            [&_.p-datatable-thead_th]:border-gray-200!
+            [&_.p-datatable-thead_th]:bg-transparent!
+            [&_.p-datatable-thead_th]:text-[#0034B7]
+            [&_.p-datatable-tbody_tr]:border-none!
+            [&_.p-datatable-tbody_tr]:bg-transparent!
+            [&_.p-datatable-tbody_tr]:text-gray-800!
+            [&_.p-datatable-tbody_tr:nth-child(even)]:bg-gray-50!
+            [&_.p-datatable-tbody_tr:hover]:bg-gray-100!
+          "
+        >
+          <Table
+            value={users}
+            paginator
+            rows={5}
+            rowsPerPageOptions={[5, 10, 25]}
+            loading={isLoading}
+            globalFilter={globalFilter}
+            globalFilterFields={["name", "email", "role"]}
+            className="w-full"
+            emptyMessage="Nenhum usuário encontrado."
+            dataKey="id"
+          >
+            <Column
+              field="name"
+              header="Nome"
+              sortable
+              body={(rowData: User) => rowData.name || "-"}
+            />
+            <Column field="email" header="Email" sortable />
+            <Column field="role" header="Perfil" sortable />
+            <Column
+              header="Ação"
+              body={actionBodyTemplate}
+              style={{ width: "80px" }}
+            />
+          </Table>
+        </div>
+
+        <Menu
+          model={actionMenuItems}
+          popup
+          popupAlignment="right"
+          ref={menuRef}
+          id="popup_menu_users"
+        />
       </Card>
 
       <Dialog

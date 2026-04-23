@@ -1,7 +1,17 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Tag, Typography } from '@uigovpe/components';
+import {
+  Button,
+  Card,
+  Column,
+  Dropdown,
+  Search,
+  Table,
+  Tag,
+  Typography,
+  InputText
+} from '@uigovpe/components';
 import { authService } from '../../../../services/auth.service';
 import {
   AuditReportEntry,
@@ -25,6 +35,14 @@ const initialFilters: FilterState = {
   startDate: '',
   endDate: '',
 };
+
+const actionOptions = [
+  { label: 'Todas', value: '' },
+  { label: 'CREATE', value: 'CREATE' },
+  { label: 'UPDATE', value: 'UPDATE' },
+  { label: 'DELETE', value: 'DELETE' },
+  { label: 'LOGIN', value: 'LOGIN' },
+];
 
 function formatDate(dateString: string) {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -272,36 +290,39 @@ export default function AuditoriaPage() {
       </div>
 
       <Card>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div className="xl:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-700">Busca</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(event) => handleFilterChange('search', event.target.value)}
-              placeholder="Nome, e-mail, entidade, ID ou ação"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+        <h2 className="mb-6 text-xl font-bold text-gray-800">
+          Filtros do Relatório
+        </h2>
+
+        <div className="mb-6">
+          <Search
+            label="Busca"
+            placeholder="Nome, e-mail, entidade, ID ou ação"
+            value={filters.search}
+            onChange={(event: any) => handleFilterChange('search', event.value)}
+            showAutocomplete={false}
+            className="w-full [&_label]:text-gray-700 [&_input]:border-gray-300 [&_input]:bg-white [&_input]:text-gray-900"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Ação</label>
+            <Dropdown
+              value={filters.action}
+              onChange={(event: any) => handleFilterChange('action', event.value)}
+              options={actionOptions}
+              optionLabel="label"
+              placeholder="Selecione a ação"
+              className="w-full"
+              appendTo={typeof window !== 'undefined' ? document.body : undefined}
+              panelClassName="z-[9999]"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Ação</label>
-            <select
-              value={filters.action}
-              onChange={(event) => handleFilterChange('action', event.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-            >
-              <option value="">Todas</option>
-              <option value="CREATE">CREATE</option>
-              <option value="UPDATE">UPDATE</option>
-              <option value="DELETE">DELETE</option>
-              <option value="LOGIN">LOGIN</option>
-            </select>
-          </div>
-
-          <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">Entidade</label>
-            <input
+            <InputText
               type="text"
               value={filters.entityType}
               onChange={(event) => handleFilterChange('entityType', event.target.value)}
@@ -310,26 +331,24 @@ export default function AuditoriaPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:col-span-5">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Data inicial</label>
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(event) => handleFilterChange('startDate', event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-              />
-            </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Data inicial</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(event) => handleFilterChange('startDate', event.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+            />
+          </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Data final</label>
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(event) => handleFilterChange('endDate', event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-              />
-            </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Data final</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(event) => handleFilterChange('endDate', event.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+            />
           </div>
         </div>
       </Card>
@@ -349,45 +368,78 @@ export default function AuditoriaPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[960px] border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="p-4 font-semibold text-gray-700">Quando</th>
-                    <th className="p-4 font-semibold text-gray-700">Quem</th>
-                    <th className="p-4 font-semibold text-gray-700">O que</th>
-                    <th className="p-4 font-semibold text-gray-700">Entidade</th>
-                    <th className="p-4 font-semibold text-gray-700">Registro</th>
-                    <th className="p-4 font-semibold text-gray-700">Detalhes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.data.map((entry: AuditReportEntry) => (
-                    <tr key={entry.id} className="border-b border-gray-100 align-top">
-                      <td className="p-4 text-sm text-gray-700">{formatDate(entry.createdAt)}</td>
-                      <td className="p-4 text-sm text-gray-700">
-                        <div className="font-medium text-gray-900">{entry.actor?.name || 'Sem nome'}</div>
-                        <div>{entry.actor?.email || 'Sem e-mail'}</div>
-                      </td>
-                      <td className="p-4">
-                        <Tag value={entry.action} severity={getActionSeverity(entry.action)} />
-                      </td>
-                      <td className="p-4 text-sm text-gray-700">{entry.entityType || '-'}</td>
-                      <td className="p-4 text-sm text-gray-700">{entry.entityId || '-'}</td>
-                      <td className="p-4 text-sm text-gray-700">
-                        <details className="max-w-[320px]">
-                          <summary className="cursor-pointer font-medium text-blue-700">
-                            Ver detalhes
-                          </summary>
-                          <pre className="mt-3 overflow-x-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
-                            {formatMetadata(entry.metadata)}
-                          </pre>
-                        </details>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div
+              className="
+                [&_.p-datatable-thead_th]:border-b!
+                [&_.p-datatable-thead_th]:border-gray-200!
+                [&_.p-datatable-thead_th]:bg-transparent!
+                [&_.p-datatable-thead_th]:text-[#0034B7]
+                [&_.p-datatable-tbody_tr]:border-none!
+                [&_.p-datatable-tbody_tr]:bg-transparent!
+                [&_.p-datatable-tbody_tr]:text-gray-800!
+                [&_.p-datatable-tbody_tr:nth-child(even)]:bg-gray-50!
+                [&_.p-datatable-tbody_tr:hover]:bg-gray-100!
+              "
+            >
+              <Table
+                value={report.data}
+                className="w-full"
+                dataKey="id"
+                emptyMessage="Nenhum registro encontrado para os filtros informados."
+              >
+                <Column
+                  field="createdAt"
+                  header="Quando"
+                  body={(entry: AuditReportEntry) => (
+                    <span className="text-sm text-gray-700">{formatDate(entry.createdAt)}</span>
+                  )}
+                />
+                <Column
+                  header="Quem"
+                  body={(entry: AuditReportEntry) => (
+                    <div className="text-sm text-gray-700">
+                      <div className="font-medium text-gray-900">{entry.actor?.name || 'Sem nome'}</div>
+                      <div>{entry.actor?.email || 'Sem e-mail'}</div>
+                    </div>
+                  )}
+                />
+                <Column
+                  field="action"
+                  header="O que"
+                  body={(entry: AuditReportEntry) => (
+                    <Tag value={entry.action} severity={getActionSeverity(entry.action)} />
+                  )}
+                />
+                <Column
+                  field="entityType"
+                  header="Entidade"
+                  body={(entry: AuditReportEntry) => (
+                    <span className="text-sm text-gray-700">{entry.entityType || '-'}</span>
+                  )}
+                />
+                <Column
+                  field="entityId"
+                  header="Registro"
+                  body={(entry: AuditReportEntry) => (
+                    <span className="text-sm text-gray-700">{entry.entityId || '-'}</span>
+                  )}
+                />
+                <Column
+                  header="Detalhes"
+                  body={(entry: AuditReportEntry) => (
+                    <div className="max-w-[320px] text-sm text-gray-700">
+                      <details>
+                        <summary className="cursor-pointer font-medium text-blue-700">
+                          Ver detalhes
+                        </summary>
+                        <pre className="mt-3 overflow-x-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+                          {formatMetadata(entry.metadata)}
+                        </pre>
+                      </details>
+                    </div>
+                  )}
+                />
+              </Table>
             </div>
 
             <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-4 sm:flex-row">
