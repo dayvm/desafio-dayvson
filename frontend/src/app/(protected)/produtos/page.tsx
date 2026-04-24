@@ -1,34 +1,91 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AutoCompleteChangeEvent,
   Button,
+  Card,
   Dialog,
   FlexContainer,
   Icon,
+  Image,
+  InputFile,
+  InputSwitch,
   InputText,
   InputTextarea,
+  Message,
+  MultiSelect,
+  MultiSelectChangeEvent,
+  Paginator,
+  PaginatorPageChangeEvent,
+  Search,
+  Tag,
+  Typography,
 } from "@uigovpe/components";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { productsService, Product } from "../../../services/products.service";
-import { categoriesService, Category } from "../../../services/categories.service";
 import { authService } from "../../../services/auth.service";
+import { Category, categoriesService } from "../../../services/categories.service";
+import { Product, productsService } from "../../../services/products.service";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const defaultProductImage = "/images/default-product.png";
+const initialRowsPerPage = 8;
 
-// Esquema de validação
 const productSchema = z.object({
-  name: z.string().min(1, "O nome do produto é obrigatório"),
+  name: z.string().min(1, "O nome do produto e obrigatorio"),
   description: z.string().optional(),
   categoryIds: z.array(z.string()).optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
+type ProductQueryParams = NonNullable<Parameters<typeof productsService.findAll>[0]> & {
+  ownerId?: string;
+};
+type FeedbackSeverity = "success" | "error" | "info" | "warn";
+type Feedback = {
+  severity: FeedbackSeverity;
+  summary: string;
+  text: string;
+};
+type LoadDataOptions = {
+  page?: number;
+  onlyMine?: boolean;
+  search?: string;
+  limit?: number;
+  silent?: boolean;
+};
 
-export default function ProdutosPage() {
+function getProductImageUrl(product: Product) {
+  if (!product.imageUrl) {
+    return defaultProductImage;
+  }
+
+  return `${apiBaseUrl}/files/image?path=${encodeURIComponent(product.imageUrl)}`;
+}
+
+function getCategoryOptions(categories: Category[]) {
+  return categories.map((category) => ({
+    label: category.name,
+    value: category.id,
+  }));
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { data?: { message?: unknown } } }).response;
+
+    if (typeof response?.data?.message === "string") {
+      return response.data.message;
+    }
+  }
+
+  return fallback;
+}
+
+export default function ProdutosUigovpePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,13 +93,19 @@ export default function ProdutosPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-
-  // Paginação e Filtros
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  const categoryOptions = useMemo(() => getCategoryOptions(categories), [categories]);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / rowsPerPage));
 
   const {
     control,
@@ -54,347 +117,463 @@ export default function ProdutosPage() {
     defaultValues: { name: "", description: "", categoryIds: [] },
   });
 
-  const loadData = async (page = 1, onlyMine = showOnlyMine) => {
-    setIsLoading(true);
+  const loadData = useCallback(async ({
+    page = 1,
+    onlyMine = false,
+    search = "",
+    limit = initialRowsPerPage,
+    silent = false,
+  }: LoadDataOptions = {}) => {
+    if (!silent) {
+      setIsLoading(true);
+    }
+
     try {
       const user = authService.getStoredUser();
       setCurrentUserId(user?.id || null);
       setUserRole(user?.role || null);
 
-      const params = {
+      const params: ProductQueryParams = {
         page,
-        limit: 8,
-        ...(onlyMine && user?.id ? { ownerId: user.id } : {})
+        limit,
       };
+
+      if (search.trim()) {
+        params.search = search.trim();
+      }
+
+      if (onlyMine && user?.id) {
+        params.ownerId = user.id;
+      }
 
       const [productsResponse, categoriesData] = await Promise.all([
         productsService.findAll(params),
-        categoriesService.findAll()
+        categoriesService.findAll(),
       ]);
 
       setProducts(productsResponse.data);
-      setTotalPages(productsResponse.meta.totalPages);
+      setTotalRecords(productsResponse.meta.total);
       setCurrentPage(productsResponse.meta.page);
+      setRowsPerPage(productsResponse.meta.limit);
       setCategories(categoriesData);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
+    } catch (error: unknown) {
+      setFeedback({
+        severity: "error",
+        summary: "Erro ao buscar produtos",
+        text: getErrorMessage(error, "Nao foi possivel carregar o catalogo."),
+      });
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadData({ silent: true });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadData]);
+
+  const openCreateDialog = () => {
+    setEditingProduct(null);
+    setSelectedFile(null);
+    reset({ name: "", description: "", categoryIds: [] });
+    setIsDialogVisible(true);
   };
 
-  useEffect(() => { loadData(); }, []);
-
-  const handleFavorite = async (product: Product) => {
-    if (product.ownerId === currentUserId) return alert("Você não pode favoritar seu próprio produto.");
-    try {
-      await productsService.favorite(product.id);
-      alert("Favoritado com sucesso!");
-    } catch (e) { alert("Erro ao favoritar."); }
-  };
-
-  const onSubmit = async (data: ProductFormData) => {
-    setIsSaving(true);
-    try {
-      const formData = new FormData();
-      formData.append("name", data.name);
-      if (data.description) formData.append("description", data.description);
-      if (data.categoryIds) formData.append("categoryIds", JSON.stringify(data.categoryIds));
-      if (selectedFile) formData.append("file", selectedFile);
-
-      if (editingProduct) await productsService.update(editingProduct.id, formData);
-      else await productsService.create(formData);
-
-      setIsDialogVisible(false);
-      loadData(currentPage);
-    } catch (e) { alert("Erro ao salvar."); } finally { setIsSaving(false); }
+  const openEditDialog = (product: Product) => {
+    setEditingProduct(product);
+    setSelectedFile(null);
+    reset({
+      name: product.name,
+      description: product.description || "",
+      categoryIds: product.categories?.map((item) => item.category.id) || [],
+    });
+    setIsDialogVisible(true);
   };
 
   const closeDialog = () => {
     setIsDialogVisible(false);
     setEditingProduct(null);
-    reset({ name: "", description: "", categoryIds: [] });
     setSelectedFile(null);
+    reset({ name: "", description: "", categoryIds: [] });
+  };
+
+  const handleSearchChange = (event: AutoCompleteChangeEvent) => {
+    setSearchValue(String(event.value || ""));
+  };
+
+  const handleSearch = (value: unknown) => {
+    const nextSearch = typeof value === "string" ? value : searchValue;
+    setSearchValue(nextSearch);
+    void loadData({ page: 1, onlyMine: showOnlyMine, search: nextSearch, limit: rowsPerPage });
+  };
+
+  const handleToggleMine = (checked: boolean) => {
+    setShowOnlyMine(checked);
+    void loadData({ page: 1, onlyMine: checked, search: searchValue, limit: rowsPerPage });
+  };
+
+  const handlePageChange = (event: PaginatorPageChangeEvent) => {
+    void loadData({
+      page: event.page + 1,
+      onlyMine: showOnlyMine,
+      search: searchValue,
+      limit: event.rows,
+    });
+  };
+
+  const handleFavorite = async (product: Product) => {
+    if (product.ownerId === currentUserId) {
+      setFeedback({
+        severity: "warn",
+        summary: "Acao nao permitida",
+        text: "Voce nao pode favoritar seu proprio produto.",
+      });
+      return;
+    }
+
+    try {
+      await productsService.favorite(product.id);
+      setFeedback({
+        severity: "success",
+        summary: "Produto favoritado",
+        text: `${product.name} foi adicionado aos seus favoritos.`,
+      });
+    } catch (error: unknown) {
+      setFeedback({
+        severity: "error",
+        summary: "Erro ao favoritar",
+        text: getErrorMessage(error, "Nao foi possivel favoritar o produto."),
+      });
+    }
+  };
+
+  const onSubmit = async (data: ProductFormData) => {
+    setIsSaving(true);
+    setFeedback(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("name", data.name);
+
+      if (data.description) {
+        formData.append("description", data.description);
+      }
+
+      if (data.categoryIds?.length) {
+        formData.append("categoryIds", JSON.stringify(data.categoryIds));
+      }
+
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      if (editingProduct) {
+        await productsService.update(editingProduct.id, formData);
+      } else {
+        await productsService.create(formData);
+      }
+
+      setFeedback({
+        severity: "success",
+        summary: editingProduct ? "Produto atualizado" : "Produto criado",
+        text: editingProduct
+          ? "As alteracoes foram salvas com sucesso."
+          : "O produto foi adicionado ao catalogo.",
+      });
+      closeDialog();
+      void loadData({ page: currentPage, onlyMine: showOnlyMine, search: searchValue, limit: rowsPerPage });
+    } catch (error: unknown) {
+      setFeedback({
+        severity: "error",
+        summary: "Erro ao salvar",
+        text: getErrorMessage(error, "Nao foi possivel salvar o produto."),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingProduct) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setFeedback(null);
+
+    try {
+      await productsService.remove(deletingProduct.id);
+      setFeedback({
+        severity: "success",
+        summary: "Produto excluido",
+        text: `${deletingProduct.name} foi removido do catalogo.`,
+      });
+      setDeletingProduct(null);
+      void loadData({ page: currentPage, onlyMine: showOnlyMine, search: searchValue, limit: rowsPerPage });
+    } catch (error: unknown) {
+      setFeedback({
+        severity: "error",
+        summary: "Erro ao excluir",
+        text: getErrorMessage(error, "Nao foi possivel excluir o produto."),
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
-    <div className="w-full pb-40"> {/* pb-40 para garantir que o fim da lista apareça */}
-      <section className="mx-auto w-full max-w-7xl space-y-6">
-        <header className="flex flex-wrap items-center justify-between gap-4 px-1">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-[#28272C]">Produtos</h1>
-            <p className="text-sm text-[#494C57]">Gerencie o catálogo institucional.</p>
+    <FlexContainer direction="col" gap="6" className="w-full pb-24">
+      <Card elevation="low">
+        <FlexContainer direction="row" gap="4" justify="between" align="end" wrap="wrap">
+          <FlexContainer direction="col" gap="1">
+            <Typography variant="h1" size="xxl" fontWeight="bold">
+              Produtos
+            </Typography>
+            <Typography variant="p" className="text-gray-600">
+              Gerencie o catalogo institucional com os componentes do UI GovPE.
+            </Typography>
+          </FlexContainer>
+
+          <FlexContainer direction="row" gap="3" align="center" wrap="wrap">
+            <InputSwitch
+              checked={showOnlyMine}
+              label="Meus produtos"
+              onChange={(event) => handleToggleMine(Boolean(event.value))}
+            />
+            <Button label="Novo Produto" icon={<Icon icon="add" />} onClick={openCreateDialog} />
+          </FlexContainer>
+        </FlexContainer>
+      </Card>
+
+      <Card elevation="low">
+        <FlexContainer direction="row" gap="4" justify="between" align="end" wrap="wrap">
+          <FlexContainer direction="col" gap="1">
+            <Typography variant="h2" size="lg" fontWeight="bold">
+              Vitrine
+            </Typography>
+            <Typography variant="p" className="text-gray-600">
+              {isLoading
+                ? "Carregando produtos..."
+                : `${totalRecords} produto${totalRecords === 1 ? "" : "s"} encontrado${
+                    totalRecords === 1 ? "" : "s"
+                  }`}
+            </Typography>
+          </FlexContainer>
+
+          <div className="w-full md:max-w-md">
+            <Search
+              label="Buscar produto"
+              placeholder="Nome ou descricao"
+              value={searchValue}
+              onChange={handleSearchChange}
+              onSearch={handleSearch}
+              showAutocomplete={false}
+              showEmptyMessage={false}
+            />
           </div>
-          <button
-            onClick={() => { setShowOnlyMine(!showOnlyMine); loadData(1, !showOnlyMine); }}
-            className={`flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold transition ${showOnlyMine ? "bg-[#0034B7] text-white" : "bg-white border border-gray-300 text-gray-700"}`}
-          >
-            <Icon icon={showOnlyMine ? "person" : "group"} />
-            {showOnlyMine ? "Meus Produtos" : "Todos os Produtos"}
-          </button>
-        </header>
+        </FlexContainer>
+      </Card>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-6 px-1">
+      {feedback ? (
+        <Message
+          severity={feedback.severity}
+          summary={feedback.summary}
+          text={feedback.text}
+          icon={feedback.severity === "success" ? "check_circle" : "warning"}
+        />
+      ) : null}
+
+      {isLoading ? (
+        <Card elevation="low">
+          <FlexContainer direction="row" justify="center" align="center" className="min-h-64">
+            <Typography variant="p" fontWeight="medium">
+              Carregando produtos...
+            </Typography>
+          </FlexContainer>
+        </Card>
+      ) : products.length === 0 ? (
+        <Card elevation="low">
+          <Message
+            severity="info"
+            summary="Nenhum produto encontrado"
+            text="Ajuste a busca, altere o filtro ou cadastre um novo produto."
+            icon="info"
+          />
+        </Card>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
           {products.map((product) => {
-
-            // 🔐 REGRA DE NEGÓCIO (autorização)
-            const canManage = currentUserId === product.ownerId || userRole === 'ADMIN';
-
-            // 🖼️ REGRA DE APRESENTAÇÃO (fallback de imagem)
-            const imageUrl = product.imageUrl
-              ? `${apiBaseUrl}/files/image?path=${encodeURIComponent(product.imageUrl)}`
-              : "/default-product.png";
+            const canManage = currentUserId === product.ownerId || userRole === "ADMIN";
+            const productCategories = product.categories?.length ? product.categories : [];
 
             return (
-
-              // 🧱 COMPONENTE RAIZ DO CARD
-              <article
+              <Card
                 key={product.id}
-                className="group overflow-hidden rounded-[24px] border border-[#DDE3EC] bg-[#F8FAFC] shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
-              >
+                elevation="medium"
+                className="h-full overflow-hidden"
+                header={
+                  <Image
+                    src={getProductImageUrl(product)}
+                    alt={product.name}
+                    className="block aspect-square w-full overflow-hidden bg-gray-100"
+                    imageClassName="h-full w-full object-cover"
+                    imageStyle={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    pt={{
+                      image: {
+                        onError: (event) => {
+                          event.currentTarget.src = defaultProductImage;
+                        },
+                      },
+                    }}
+                  />
+                }
+                footer={
+                  <FlexContainer direction="row" justify="between" align="center" gap="2" wrap="wrap">
+                    <Button
+                      rounded
+                      outlined
+                      severity="secondary"
+                      icon={<Icon icon="favorite" />}
+                      aria-label={`Favoritar ${product.name}`}
+                      onClick={() => handleFavorite(product)}
+                    />
 
-                {/* 📦 WRAPPER PRINCIPAL (afastamento interno do card inteiro) */}
-                <div className="p-5 flex flex-col gap-5">
-
-                  {/* 🔳 WRAPPER SUPERIOR (IMAGEM) */}
-                  <div className="flex flex-col">
-
-                    {/* 🖼️ CONTAINER DA IMAGEM */}
-                    <div className=" aspect-square max-h-[360px] mx-auto overflow-hidden rounded-[18px] border border-[#DCE3EE] bg-white">
-
-                      {/* 📐 AREA RESPONSIVA */}
-                      <div className="aspect-square bg-[#EEF2F7]">
-
-                        <img
-                          src={imageUrl}
-                          alt={product.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/images/default-product.png";
-                          }}
+                    {canManage ? (
+                      <FlexContainer direction="row" gap="2" align="center">
+                        <Button
+                          rounded
+                          outlined
+                          severity="secondary"
+                          icon={<Icon icon="edit" />}
+                          aria-label={`Editar ${product.name}`}
+                          onClick={() => openEditDialog(product)}
                         />
+                        <Button
+                          rounded
+                          outlined
+                          severity="danger"
+                          icon={<Icon icon="delete" />}
+                          aria-label={`Excluir ${product.name}`}
+                          onClick={() => setDeletingProduct(product)}
+                        />
+                      </FlexContainer>
+                    ) : (
+                      <Tag value="Somente leitura" severity="secondary" icon="visibility" />
+                    )}
+                  </FlexContainer>
+                }
+              >
+                <FlexContainer direction="col" gap="4">
+                  <FlexContainer direction="col" gap="2">
+                    <Typography variant="h2" size="lg" fontWeight="bold" className="line-clamp-2">
+                      {product.name}
+                    </Typography>
+                    <Typography variant="p" className="line-clamp-4 text-gray-600">
+                      {product.description || "Sem descricao."}
+                    </Typography>
+                  </FlexContainer>
 
-                      </div>
-                    </div>
-                  </div>
+                  <FlexContainer direction="row" gap="2" wrap="wrap">
+                    {productCategories.length > 0 ? (
+                      productCategories.map((item) => (
+                        <Tag
+                          key={item.category.id}
+                          value={item.category.name}
+                          severity="info"
+                          icon="category"
+                        />
+                      ))
+                    ) : (
+                      <Tag value="Geral" severity="info" icon="category" />
+                    )}
+                  </FlexContainer>
 
-                  {/* 🔻 WRAPPER INFERIOR (TEXTO + RODAPÉ) */}
-                  <div className="flex flex-col justify-between gap-4 flex-1">
-
-                    {/* 📝 BLOCO DE INFORMAÇÕES TEXTUAIS */}
-                    <div className="min-w-0">
-
-                      {/* 🏷️ NOME DO PRODUTO */}
-                      <h2 className="truncate text-[1.2rem] font-bold leading-snug text-[#28272C]">
-                        {product.name}
-                      </h2>
-
-                      {/* 📄 DESCRIÇÃO */}
-                      <p className="mt-3 line-clamp-4 text-[0.9rem] leading-6 text-[#494C57]">
-                        {product.description || "Sem descrição."}
-                      </p>
-
-                    </div>
-
-                    {/* ⚙️ RODAPÉ DO CARD */}
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-
-                      {/* ❤️ FAVORITAR (AGORA À ESQUERDA) */}
-                      <button
-                        onClick={() => handleFavorite(product)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DCE8] bg-white text-[#28272C] shadow-sm hover:text-red-500 transition-colors"
-                      >
-                        <Icon icon="favorite" />
-                      </button>
-
-                      {/* 🏷️ CATEGORIAS (lado a lado, sem sobreposição) */}
-                      <div className="flex gap-2 flex-wrap flex-1 justify-center">
-
-                        {product.categories?.length ? (
-                          product.categories.map((c) => (
-                            <span
-                              key={c.category.id}
-                              className="whitespace-nowrap rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]"
-                            >
-                              {c.category.name}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="rounded-full border border-[#D9E5FF] bg-[#EEF4FF] px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#0034B7]">
-                            Geral
-                          </span>
-                        )}
-
-                      </div>
-
-                      {/* 🧰 AÇÕES (EDITAR + DELETAR) */}
-                      <div className="flex gap-2">
-
-                        {canManage && (
-                          <>
-                            {/* ✏️ EDITAR */}
-                            <button
-                              onClick={() => {
-                                setEditingProduct(product);
-                                reset({
-                                  name: product.name,
-                                  description: product.description || "",
-                                  categoryIds: product.categories.map(c => c.category.id)
-                                });
-                                setIsDialogVisible(true);
-                              }}
-                              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
-                            >
-                              <Icon icon="edit" />
-                            </button>
-
-                            {/* 🗑️ DELETAR */}
-                            <button
-                              onClick={() =>
-                                productsService
-                                  .remove(product.id)
-                                  .then(() => loadData(currentPage))
-                              }
-                              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#F2CACA] bg-white text-[#B42318] hover:bg-[#FFF1F1]"
-                            >
-                              <Icon icon="delete" />
-                            </button>
-                          </>
-                        )}
-
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              </article>
+                  {product.owner?.name ? (
+                    <Tag value={product.owner.name} severity="secondary" icon="person" />
+                  ) : null}
+                </FlexContainer>
+              </Card>
             );
           })}
         </div>
+      )}
 
-        {/* Paginação Centralizada */}
-        {totalPages > 1 && (
-          <div className="mt-12 flex justify-center items-center gap-6">
-            <Button label="Anterior" severity="secondary" disabled={currentPage === 1} onClick={() => loadData(currentPage - 1)} />
-            <span className="text-sm font-bold text-[#494C57]">Página {currentPage} de {totalPages}</span>
-            <Button label="Próxima" severity="secondary" disabled={currentPage === totalPages} onClick={() => loadData(currentPage + 1)} />
-          </div>
-        )}
-      </section>
-
-      {/* ================================================================= */}
-      {/* 🎯 VARIAÇÕES DO BOTÃO FLUTUANTE (ADICIONAR PRODUTO)                 */}
-      {/* ================================================================= */}
-
-      {/* 🟢 VARIAÇÃO 1: Inline Styles com Força Bruta (ATIVA POR PADRÃO) */}
-      {/* Usa style nativo do React para tentar furar os bloqueios de layout do pai */}
-      <button
-        type="button"
-        onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
-        style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 999999 }}
-        // 👇 Usando a sintaxe [valor] para forçar o tamanho exato em pixels
-        className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-[#BCC9E0] text-white shadow-2xl transition hover:scale-105 active:scale-95"
-      >
-        <Icon icon="add" className="text-[200px] text-white" />
-      </button>
-
-      {/* 🔴 VARIAÇÃO 2: Sticky Positioning (O Salvador de Layouts Quebrados) */}
-      {/* Ele "gruda" na base da tela independente do pai. Geralmente a melhor solução quando o Fixed falha. */}
-      {/*
-      <div className="sticky bottom-8 flex justify-end w-full pr-8 pointer-events-none">
-        <button
-          type="button"
-          onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
-          className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#0034B7] text-white shadow-2xl transition hover:scale-110 active:scale-95"
-        >
-          <Icon icon="add" className="text-3xl" />
-        </button>
-      </div>
-      */}
-
-      {/* 🟡 VARIAÇÃO 3: Fixed ancorado pelo TOPO usando Viewport Height (vh) e (vw) */}
-      {/* Em vez de usar bottom-8, ele calcula 85% da altura da tela real. */}
-      {/*
-      <button
-        type="button"
-        onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
-        className="fixed top-[85vh] right-[5vw] z-[9999] flex h-16 w-16 items-center justify-center rounded-full bg-[#0034B7] text-white shadow-2xl transition hover:scale-110 active:scale-95"
-      >
-        <Icon icon="add" className="text-3xl" />
-      </button>
-      */}
-
-      {/* ⚪ VARIAÇÃO 4: O SEU CÓDIGO ORIGINAL INTACTO */}
-      {/* Para caso você queira voltar ao que estava antes. */}
-      {/*
-      <button
-        type="button"
-        onClick={() => { setEditingProduct(null); reset({ name: "", description: "", categoryIds: [] }); setIsDialogVisible(true); }}
-        className="fixed bottom-8 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-[#0034B7] text-white shadow-2xl transition hover:scale-110 active:scale-95"
-      >
-        <Icon icon="add" className="text-3xl" />
-      </button>
-      */}
-
-      {/* ================================================================= */}
+      {totalRecords > rowsPerPage ? (
+        <Card elevation="low">
+          <Paginator
+            first={(currentPage - 1) * rowsPerPage}
+            rows={rowsPerPage}
+            totalRecords={totalRecords}
+            rowsPerPageOptions={[8, 16, 24]}
+            showRowsPerPage={false}
+            showCurrentPageReport
+            centered
+            onPageChange={handlePageChange}
+          />
+          <Typography variant="p" size="small" textAlign="center" className="mt-3 text-gray-600">
+            Pagina {currentPage} de {totalPages}
+          </Typography>
+        </Card>
+      ) : null}
 
       <Dialog
         header={editingProduct ? "Editar Produto" : "Cadastrar Produto"}
         visible={isDialogVisible}
         onHide={closeDialog}
-        style={{ width: "92vw", maxWidth: "460px" }}
+        style={{ width: "92vw", maxWidth: "560px" }}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
           <FlexContainer direction="col" gap="4">
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-[#F8FAFC] p-4">
-              <label className="text-sm font-semibold text-[#28272C]">Imagem do produto</label>
-              <p className="mt-1 text-xs leading-5 text-[#6B7280]">
-                {editingProduct ? "Envie uma nova imagem para substituir a atual." : "Envie um arquivo de imagem para a vitrine."}
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="mt-3 block w-full text-xs text-[#494C57] file:mr-3 file:rounded-full file:border-0 file:bg-[#EEF4FF] file:px-4 file:py-2.5 file:font-semibold file:text-[#0034B7]"
-              />
-            </div>
+            <InputFile
+              label="Imagem do produto"
+              accept="image/*"
+              placeholder="Selecionar imagem"
+              supportText={
+                editingProduct
+                  ? "Envie uma nova imagem para substituir a atual."
+                  : "Formatos aceitos: imagens."
+              }
+              fileNameAttachment={selectedFile?.name || null}
+              success={!!selectedFile}
+              onChange={(files) => setSelectedFile(files?.[0] || null)}
+              onClear={() => setSelectedFile(null)}
+            />
 
             <Controller
               name="name"
               control={control}
               render={({ field }) => (
-                <InputText {...field} label="Nome *" invalid={!!errors.name} supportText={errors.name?.message} />
+                <InputText
+                  {...field}
+                  label="Nome *"
+                  placeholder="Nome do produto"
+                  invalid={!!errors.name}
+                  supportText={errors.name?.message}
+                />
               )}
             />
 
-            {/* SELEÇÃO DE CATEGORIAS */}
             <Controller
               name="categoryIds"
               control={control}
               render={({ field }) => (
-                <div className="w-full">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Categorias
-                  </label>
-
-                  <select
-                    multiple
-                    value={field.value || []}
-                    onChange={(e) => {
-                      const selectedValues = Array.from(e.target.selectedOptions).map(
-                        (option) => option.value
-                      );
-                      field.onChange(selectedValues);
-                    }}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <MultiSelect
+                  value={field.value || []}
+                  options={categoryOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  display="chip"
+                  filter
+                  showClear
+                  label="Categorias"
+                  placeholder="Selecione uma ou mais categorias"
+                  emptyFilterMessage="Nenhuma categoria encontrada."
+                  supportText="Use categorias curtas para facilitar a leitura na vitrine."
+                  onChange={(event: MultiSelectChangeEvent) => field.onChange(event.value)}
+                />
               )}
             />
 
@@ -402,21 +581,66 @@ export default function ProdutosPage() {
               name="description"
               control={control}
               render={({ field }) => (
-                <InputTextarea {...field} label="Descrição" rows={3} />
+                <InputTextarea
+                  {...field}
+                  label="Descricao"
+                  placeholder="Detalhes sobre o produto"
+                  rows={4}
+                />
               )}
             />
 
-            <div className="mt-4 flex justify-end gap-2">
-              <Button label="Cancelar" severity="secondary" onClick={closeDialog} type="button" />
-              <Button label="Salvar" type="submit" loading={isSaving} />
-            </div>
+            <FlexContainer direction="row" gap="2" justify="end" wrap="wrap" className="mt-4">
+              <Button
+                type="button"
+                label="Cancelar"
+                severity="secondary"
+                outlined
+                onClick={closeDialog}
+              />
+              <Button type="submit" label="Salvar" loading={isSaving} icon={<Icon icon="save" />} />
+            </FlexContainer>
           </FlexContainer>
         </form>
       </Dialog>
-    </div>
-  );
-}
 
-function setUserRole(arg0: string | null) {
-  throw new Error("Function not implemented.");
+      <Dialog
+        header="Excluir Produto"
+        visible={!!deletingProduct}
+        onHide={() => setDeletingProduct(null)}
+        style={{ width: "92vw", maxWidth: "420px" }}
+      >
+        <FlexContainer direction="col" gap="4">
+          <Message
+            severity="warn"
+            summary="Confirmar exclusao"
+            text={
+              deletingProduct
+                ? `Deseja excluir ${deletingProduct.name}? Esta acao nao pode ser desfeita.`
+                : "Deseja excluir este produto?"
+            }
+            icon="warning"
+          />
+
+          <FlexContainer direction="row" gap="2" justify="end" wrap="wrap">
+            <Button
+              type="button"
+              label="Cancelar"
+              severity="secondary"
+              outlined
+              onClick={() => setDeletingProduct(null)}
+            />
+            <Button
+              type="button"
+              label="Excluir"
+              severity="danger"
+              loading={isDeleting}
+              icon={<Icon icon="delete" />}
+              onClick={confirmDelete}
+            />
+          </FlexContainer>
+        </FlexContainer>
+      </Dialog>
+    </FlexContainer>
+  );
 }
