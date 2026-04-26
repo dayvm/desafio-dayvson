@@ -164,7 +164,8 @@ As principais entidades do sistema são:
 
 ## Como Executar o Projeto
 
-### Com Docker
+<details>
+  <summary>Com Docker</summary>
 
 1. Na raiz do projeto `desafio-dayvson/`, crie o arquivo `.env` com o seguinte conteúdo:
 
@@ -197,7 +198,10 @@ docker compose up --build -d
 - o backend sobe na porta `3000`
 - o frontend sobe na porta `3001`
 
-### Sem Docker
+</details>
+
+<details>
+  <summary>Sem Docker</summary>
 
 #### Backend
 
@@ -274,7 +278,12 @@ npm run dev
 
 Observação: como o backend sobe na porta `3000`, o Next.js normalmente utilizará a próxima porta livre para o frontend, que costuma ser a `3001`.
 
+</details>
+
 ## Como Testar o Projeto
+
+<details>
+  <summary>Ver roteiro de testes</summary>
 
 1. Acesse o frontend pela URL exibida no terminal do Next.js. Em ambiente local, normalmente ela será [http://localhost:3001](http://localhost:3001).
 2. Entre no sistema com as credenciais definidas em `INITIAL_ADMIN_EMAIL` e `INITIAL_ADMIN_PASSWORD` no arquivo `backend/.env` ou no `.env` da raiz, se estiver usando Docker.
@@ -288,9 +297,14 @@ Observação: como o backend sobe na porta `3000`, o Next.js normalmente utiliza
 10. Volte para a conta de administrador e confira a chegada das notificações relacionadas aos favoritos recebidos.
 11. Acesse a tela de perfil, altere seus dados e envie uma imagem de avatar para validar a edição cadastral e o upload do usuário.
 
+</details>
+
 ## Scripts Úteis
 
 ### Backend
+
+<details>
+  <summary>Ver scripts do backend</summary>
 
 ```bash
 npm run build
@@ -298,13 +312,20 @@ npm run start:dev
 npm run test
 ```
 
+</details>
+
 ### Frontend
+
+<details>
+  <summary>Ver scripts do frontend</summary>
 
 ```bash
 npm run dev
 npm run build
 npm run start
 ```
+
+</details>
 
 ## Documentação dos Endpoints
 
@@ -324,6 +345,9 @@ Authorization: Bearer <token>
 
 ## Sistema e Arquivos
 
+<details>
+  <summary>Ver endpoints de sistema e arquivos</summary>
+
 | Método | Rota | Autenticação | Descrição |
 | --- | --- | --- | --- |
 | `GET` | `/` | não | endpoint base da aplicação |
@@ -340,7 +364,12 @@ Exemplo:
 GET /files/image?path=/uploads/products/imagem.png
 ```
 
+</details>
+
 ## Autenticação
+
+<details>
+  <summary>Ver endpoints de autenticação</summary>
 
 | Método | Rota | Autenticação | Descrição |
 | --- | --- | --- | --- |
@@ -372,7 +401,12 @@ Resposta esperada:
 }
 ```
 
+</details>
+
 ## Usuários
+
+<details>
+  <summary>Ver endpoints de usuários</summary>
 
 Todas as rotas de usuários exigem autenticação. A gestão administrativa de usuários é restrita a `ADMIN`.
 
@@ -421,7 +455,12 @@ Campo esperado:
 
 - `file`
 
+</details>
+
 ## Categorias
+
+<details>
+  <summary>Ver endpoints de categorias</summary>
 
 Todas as rotas de categorias exigem autenticação.
 
@@ -455,7 +494,12 @@ Body parcial:
 }
 ```
 
+</details>
+
 ## Produtos
+
+<details>
+  <summary>Ver endpoints de produtos</summary>
 
 Todas as rotas de produtos exigem autenticação.
 
@@ -517,7 +561,12 @@ file=<arquivo>
 
 Segue a mesma estrutura de `multipart/form-data` do cadastro, com todos os campos opcionais.
 
+</details>
+
 ## Notificações
+
+<details>
+  <summary>Ver endpoints de notificações</summary>
 
 Todas as rotas exigem autenticação.
 
@@ -526,7 +575,12 @@ Todas as rotas exigem autenticação.
 | `GET` | `/notifications` | autenticado | lista as notificações do usuário logado |
 | `PATCH` | `/notifications/:id/read` | autenticado | marca uma notificação como lida |
 
+</details>
+
 ## Administração
+
+<details>
+  <summary>Ver endpoints de administração</summary>
 
 As rotas abaixo exigem autenticação e perfil `ADMIN`.
 
@@ -573,6 +627,8 @@ Query params disponíveis:
 ### `GET /admin/audit-reports/export`
 
 Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV para download.
+
+</details>
 
 ## Regras de Negócio Importantes
 
