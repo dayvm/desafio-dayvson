@@ -3,7 +3,7 @@
 Aplicação full-stack desenvolvida para atender ao desafio técnico com foco em autenticação via JWT, controle de perfis, CRUDs principais, upload de arquivos, notificações, auditoria e execução local simplificada.
 
 <details>
-  <summary><strong>Visão Geral</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Visão Geral</span></strong></summary>
 
 O projeto é dividido em duas aplicações:
 
@@ -26,7 +26,7 @@ Principais entregas do sistema:
 </details>
 
 <details>
-  <summary><strong>Stack Utilizada</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Stack Utilizada</span></strong></summary>
 
 ### Frontend
 
@@ -57,7 +57,7 @@ Principais entregas do sistema:
 </details>
 
 <details>
-  <summary><strong>Estrutura do Repositório</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Estrutura do Repositório</span></strong></summary>
 
 ```text
 desafio-dayvson/
@@ -76,7 +76,7 @@ desafio-dayvson/
 </details>
 
 <details>
-  <summary><strong>Documentação do Frontend</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Documentação do Frontend</span></strong></summary>
 
 O frontend foi construído com Next.js usando App Router e tem como base visual a biblioteca `UI GovPE`.
 
@@ -120,7 +120,7 @@ O frontend foi construído com Next.js usando App Router e tem como base visual 
 </details>
 
 <details>
-  <summary><strong>Documentação do Backend</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Documentação do Backend</span></strong></summary>
 
 O backend foi construído com NestJS e Prisma, usando PostgreSQL como banco de dados principal.
 
@@ -166,7 +166,7 @@ Após subir o projeto e executar o seed, o usuário pode acessar o sistema usand
 </details>
 
 <details>
-  <summary><strong>Modelagem de Dados Resumida</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Modelagem de Dados Resumida</span></strong></summary>
 
 As principais entidades do sistema são:
 
@@ -181,7 +181,7 @@ As principais entidades do sistema são:
 </details>
 
 <details>
-  <summary><strong>Como Executar o Projeto</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Como Executar o Projeto</span></strong></summary>
 
 <details>
   <summary>Com Docker</summary>
@@ -302,7 +302,7 @@ Observação: como o backend sobe na porta `3000`, o Next.js normalmente utiliza
 </details>
 
 <details>
-  <summary><strong>Como Testar o Projeto</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Como Testar o Projeto</span></strong></summary>
 
 <details>
   <summary>Ver roteiro de testes</summary>
@@ -324,7 +324,7 @@ Observação: como o backend sobe na porta `3000`, o Next.js normalmente utiliza
 </details>
 
 <details>
-  <summary><strong>Scripts Úteis</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Scripts Úteis</span></strong></summary>
 
 ### Backend
 
@@ -355,7 +355,7 @@ npm run start
 </details>
 
 <details>
-  <summary><strong>Documentação dos Endpoints</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Documentação dos Endpoints</span></strong></summary>
 
 Observação: no estado atual do projeto, a referência principal dos endpoints está neste README.
 
@@ -374,7 +374,7 @@ Authorization: Bearer <token>
 </details>
 
 <details>
-  <summary><strong>Sistema e Arquivos</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Sistema e Arquivos</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de sistema e arquivos</summary>
@@ -400,7 +400,7 @@ GET /files/image?path=/uploads/products/imagem.png
 </details>
 
 <details>
-  <summary><strong>Autenticação</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Autenticação</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de autenticação</summary>
@@ -440,7 +440,7 @@ Resposta esperada:
 </details>
 
 <details>
-  <summary><strong>Usuários</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Usuários</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de usuários</summary>
@@ -497,7 +497,7 @@ Campo esperado:
 </details>
 
 <details>
-  <summary><strong>Categorias</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Categorias</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de categorias</summary>
@@ -539,7 +539,7 @@ Body parcial:
 </details>
 
 <details>
-  <summary><strong>Produtos</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Produtos</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de produtos</summary>
@@ -609,7 +609,7 @@ Segue a mesma estrutura de `multipart/form-data` do cadastro, com todos os campo
 </details>
 
 <details>
-  <summary><strong>Notificações</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Notificações</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de notificações</summary>
@@ -626,7 +626,7 @@ Todas as rotas exigem autenticação.
 </details>
 
 <details>
-  <summary><strong>Administração</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Administração</span></strong></summary>
 
 <details>
   <summary>Ver endpoints de administração</summary>
@@ -682,7 +682,7 @@ Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV par
 </details>
 
 <details>
-  <summary><strong>Regras de Negócio Importantes</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Regras de Negócio Importantes</span></strong></summary>
 
 - apenas usuários autenticados acessam as rotas principais do sistema
 - apenas `ADMIN` pode criar, editar, listar e remover usuários pela API administrativa
@@ -695,7 +695,7 @@ Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV par
 </details>
 
 <details>
-  <summary><strong>Observações Finais</strong></summary>
+  <summary><strong><span style="color: #f97316; -webkit-text-stroke: 0.6px #000000; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000;">Observações Finais</span></strong></summary>
 
 - o backend usa Prisma com PostgreSQL
 - o frontend consome a API via `NEXT_PUBLIC_API_URL`
