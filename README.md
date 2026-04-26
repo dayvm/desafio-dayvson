@@ -2,7 +2,8 @@
 
 Aplicação full-stack desenvolvida para atender ao desafio técnico com foco em autenticação via JWT, controle de perfis, CRUDs principais, upload de arquivos, notificações, auditoria e execução local simplificada.
 
-## Visão Geral
+<details>
+  <summary><strong>Visão Geral</strong></summary>
 
 O projeto é dividido em duas aplicações:
 
@@ -22,7 +23,10 @@ Principais entregas do sistema:
 - área administrativa com resumo do sistema e consulta de auditoria
 - estrutura Docker para subir banco, backend e frontend
 
-## Stack Utilizada
+</details>
+
+<details>
+  <summary><strong>Stack Utilizada</strong></summary>
 
 ### Frontend
 
@@ -50,7 +54,10 @@ Principais entregas do sistema:
 - Docker
 - Docker Compose
 
-## Estrutura do Repositório
+</details>
+
+<details>
+  <summary><strong>Estrutura do Repositório</strong></summary>
 
 ```text
 desafio-dayvson/
@@ -66,7 +73,10 @@ desafio-dayvson/
 └── README.md
 ```
 
-## Documentação do Frontend
+</details>
+
+<details>
+  <summary><strong>Documentação do Frontend</strong></summary>
 
 O frontend foi construído com Next.js usando App Router e tem como base visual a biblioteca `UI GovPE`.
 
@@ -107,7 +117,10 @@ O frontend foi construído com Next.js usando App Router e tem como base visual 
 - `admin.service.ts`: resumo administrativo
 - `audit-reports.service.ts`: filtros, paginação e exportação de relatórios de auditoria
 
-## Documentação do Backend
+</details>
+
+<details>
+  <summary><strong>Documentação do Backend</strong></summary>
 
 O backend foi construído com NestJS e Prisma, usando PostgreSQL como banco de dados principal.
 
@@ -150,7 +163,10 @@ As credenciais do admin inicial são definidas pelas variáveis:
 
 Após subir o projeto e executar o seed, o usuário pode acessar o sistema usando exatamente os valores informados nessas duas variáveis.
 
-## Modelagem de Dados Resumida
+</details>
+
+<details>
+  <summary><strong>Modelagem de Dados Resumida</strong></summary>
 
 As principais entidades do sistema são:
 
@@ -162,7 +178,10 @@ As principais entidades do sistema são:
 - `AuditLog`: registro de ações relevantes do sistema
 - `Notification`: notificações persistidas para o dono de um recurso
 
-## Como Executar o Projeto
+</details>
+
+<details>
+  <summary><strong>Como Executar o Projeto</strong></summary>
 
 <details>
   <summary>Com Docker</summary>
@@ -280,7 +299,10 @@ Observação: como o backend sobe na porta `3000`, o Next.js normalmente utiliza
 
 </details>
 
-## Como Testar o Projeto
+</details>
+
+<details>
+  <summary><strong>Como Testar o Projeto</strong></summary>
 
 <details>
   <summary>Ver roteiro de testes</summary>
@@ -299,7 +321,10 @@ Observação: como o backend sobe na porta `3000`, o Next.js normalmente utiliza
 
 </details>
 
-## Scripts Úteis
+</details>
+
+<details>
+  <summary><strong>Scripts Úteis</strong></summary>
 
 ### Backend
 
@@ -327,7 +352,10 @@ npm run start
 
 </details>
 
-## Documentação dos Endpoints
+</details>
+
+<details>
+  <summary><strong>Documentação dos Endpoints</strong></summary>
 
 Observação: no estado atual do projeto, a referência principal dos endpoints está neste README.
 
@@ -343,7 +371,10 @@ Para as rotas protegidas, envie o cabeçalho:
 Authorization: Bearer <token>
 ```
 
-## Sistema e Arquivos
+</details>
+
+<details>
+  <summary><strong>Sistema e Arquivos</strong></summary>
 
 <details>
   <summary>Ver endpoints de sistema e arquivos</summary>
@@ -366,7 +397,10 @@ GET /files/image?path=/uploads/products/imagem.png
 
 </details>
 
-## Autenticação
+</details>
+
+<details>
+  <summary><strong>Autenticação</strong></summary>
 
 <details>
   <summary>Ver endpoints de autenticação</summary>
@@ -403,7 +437,10 @@ Resposta esperada:
 
 </details>
 
-## Usuários
+</details>
+
+<details>
+  <summary><strong>Usuários</strong></summary>
 
 <details>
   <summary>Ver endpoints de usuários</summary>
@@ -457,7 +494,10 @@ Campo esperado:
 
 </details>
 
-## Categorias
+</details>
+
+<details>
+  <summary><strong>Categorias</strong></summary>
 
 <details>
   <summary>Ver endpoints de categorias</summary>
@@ -496,7 +536,10 @@ Body parcial:
 
 </details>
 
-## Produtos
+</details>
+
+<details>
+  <summary><strong>Produtos</strong></summary>
 
 <details>
   <summary>Ver endpoints de produtos</summary>
@@ -563,7 +606,10 @@ Segue a mesma estrutura de `multipart/form-data` do cadastro, com todos os campo
 
 </details>
 
-## Notificações
+</details>
+
+<details>
+  <summary><strong>Notificações</strong></summary>
 
 <details>
   <summary>Ver endpoints de notificações</summary>
@@ -577,7 +623,10 @@ Todas as rotas exigem autenticação.
 
 </details>
 
-## Administração
+</details>
+
+<details>
+  <summary><strong>Administração</strong></summary>
 
 <details>
   <summary>Ver endpoints de administração</summary>
@@ -630,7 +679,10 @@ Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV par
 
 </details>
 
-## Regras de Negócio Importantes
+</details>
+
+<details>
+  <summary><strong>Regras de Negócio Importantes</strong></summary>
 
 - apenas usuários autenticados acessam as rotas principais do sistema
 - apenas `ADMIN` pode criar, editar, listar e remover usuários pela API administrativa
@@ -640,9 +692,14 @@ Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV par
 - interações relevantes em recursos de terceiros podem gerar notificações ao dono do recurso
 - o seed inicial cria um administrador caso ainda não exista nenhum `ADMIN`
 
-## Observações Finais
+</details>
+
+<details>
+  <summary><strong>Observações Finais</strong></summary>
 
 - o backend usa Prisma com PostgreSQL
 - o frontend consome a API via `NEXT_PUBLIC_API_URL`
 - a biblioteca visual principal do frontend é a `UI GovPE`
 - a documentação operacional do projeto está centralizada neste arquivo
+
+</details>
