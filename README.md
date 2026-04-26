@@ -80,6 +80,7 @@ O frontend foi construído com Next.js usando App Router e tem como base visual 
 | `/categorias` | listagem e manutenção de categorias |
 | `/produtos` | listagem e manutenção de produtos |
 | `/notificacoes` | central de notificações do usuário logado |
+| `/relatorios/auditoria` | consulta administrativa de auditoria e exportação |
 | `/perfil` | edição de informações do usuário e upload de avatar |
 
 ### Organização do frontend
@@ -104,6 +105,7 @@ O frontend foi construído com Next.js usando App Router e tem como base visual 
 - `products.service.ts`: CRUD de produtos e favoritos
 - `notifications.service.ts`: listagem e leitura de notificações
 - `admin.service.ts`: resumo administrativo
+- `audit-reports.service.ts`: filtros, paginação e exportação de relatórios de auditoria
 
 ## Documentação do Backend
 
@@ -160,13 +162,11 @@ As principais entidades do sistema são:
 - `AuditLog`: registro de ações relevantes do sistema
 - `Notification`: notificações persistidas para o dono de um recurso
 
-## Variáveis de Ambiente
+## Como Executar o Projeto
 
-### 1. Execução com Docker
+### Com Docker
 
-Para rodar com Docker, crie um único arquivo `.env` na raiz do projeto `desafio-dayvson/`.
-
-Exemplo:
+1. Na raiz do projeto `desafio-dayvson/`, crie o arquivo `.env` com o seguinte conteúdo:
 
 ```env
 DB_USER=admin_db
@@ -181,34 +181,14 @@ INITIAL_ADMIN_PASSWORD=123456
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-### 2. Execução sem Docker
-
-### `backend/.env`
-
-```env
-DATABASE_URL=postgresql://admin_db:senha_super_forte@localhost:5432/desafio_db?schema=public
-JWT_SECRET=sua_chave_jwt_aqui
-INITIAL_ADMIN_EMAIL=admin@email.com
-INITIAL_ADMIN_PASSWORD=123456
-```
-
-### `frontend/.env`
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
-## Como Executar o Projeto
-
-### Com Docker
-
-1. Na raiz do projeto `desafio-dayvson/`, crie o arquivo `.env`.
-2. Preencha as variáveis conforme o exemplo acima.
-3. Execute:
+2. Ajuste os valores conforme o ambiente que você deseja utilizar.
+3. Execute o comando abaixo:
 
 ```bash
 docker compose up --build -d
 ```
+
+4. Aguarde a subida completa dos containers.
 
 ### O que acontece no fluxo Docker
 
@@ -217,71 +197,76 @@ docker compose up --build -d
 - o backend sobe na porta `3000`
 - o frontend sobe na porta `3001`
 
-### URLs padrão
-
-- frontend: [http://localhost:3001](http://localhost:3001)
-- backend: [http://localhost:3000](http://localhost:3000)
-- banco PostgreSQL: `localhost:5432`
-
 ### Sem Docker
 
-### Backend
+#### Backend
 
-Entre na pasta `backend`:
+1. Entre na pasta `backend`:
 
 ```bash
 cd backend
 ```
 
-Instale as dependências:
+2. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-Crie o arquivo `.env` do backend e ajuste a `DATABASE_URL` conforme o banco que você estiver utilizando.
+3. Crie o arquivo `backend/.env` com o seguinte conteúdo e ajuste a `DATABASE_URL` conforme o banco que você estiver utilizando:
 
-Gere o client do Prisma:
+```env
+DATABASE_URL=postgresql://admin_db:senha_super_forte@localhost:5432/desafio_db?schema=public
+JWT_SECRET=sua_chave_jwt_aqui
+INITIAL_ADMIN_EMAIL=admin@email.com
+INITIAL_ADMIN_PASSWORD=123456
+```
+
+4. Gere o client do Prisma:
 
 ```bash
 npx prisma generate
 ```
 
-Rode as migrations:
+5. Rode as migrations:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-Execute o seed:
+6. Execute o seed:
 
 ```bash
 npx prisma db seed
 ```
 
-Inicie o backend:
+7. Inicie o backend:
 
 ```bash
 npm run start:dev
 ```
 
-### Frontend
+#### Frontend
 
-Em outro terminal, entre na pasta `frontend`:
+1. Em outro terminal, entre na pasta `frontend`:
 
 ```bash
 cd frontend
 ```
 
-Crie o arquivo `.env` do frontend.
+2. Crie o arquivo `frontend/.env` com o seguinte conteúdo:
 
-Instale as dependências:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+3. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-Inicie o frontend:
+4. Inicie o frontend:
 
 ```bash
 npm run dev
@@ -289,10 +274,19 @@ npm run dev
 
 Observação: como o backend sobe na porta `3000`, o Next.js normalmente utilizará a próxima porta livre para o frontend, que costuma ser a `3001`.
 
-### URLs padrão sem Docker
+## Como Testar o Projeto
 
-- frontend: normalmente [http://localhost:3001](http://localhost:3001)
-- backend: [http://localhost:3000](http://localhost:3000)
+1. Acesse o frontend pela URL exibida no terminal do Next.js. Em ambiente local, normalmente ela será [http://localhost:3001](http://localhost:3001).
+2. Entre no sistema com as credenciais definidas em `INITIAL_ADMIN_EMAIL` e `INITIAL_ADMIN_PASSWORD` no arquivo `backend/.env` ou no `.env` da raiz, se estiver usando Docker.
+3. Navegue pelas páginas do sistema por meio do menu lateral para validar autenticação, permissões e carregamento das telas principais.
+4. Cadastre categorias e produtos, incluindo upload de imagem, para validar formulários, persistência e exibição dos arquivos enviados.
+5. Acesse `/dashboard` e `/relatorios/auditoria` para conferir os resumos administrativos, estatísticas e registros de auditoria.
+6. Na tela de usuários, crie um novo usuário com perfil `USER`.
+7. Encerre a sessão do administrador e entre novamente com o usuário `USER` criado no passo anterior.
+8. Verifique se esse novo usuário consegue visualizar os produtos e categorias já criados pelo administrador.
+9. Favorite produtos de outros usuários para validar a funcionalidade de favoritos.
+10. Volte para a conta de administrador e confira a chegada das notificações relacionadas aos favoritos recebidos.
+11. Acesse a tela de perfil, altere seus dados e envie uma imagem de avatar para validar a edição cadastral e o upload do usuário.
 
 ## Scripts Úteis
 
@@ -540,6 +534,8 @@ As rotas abaixo exigem autenticação e perfil `ADMIN`.
 | --- | --- | --- | --- |
 | `GET` | `/admin/summary` | `ADMIN` | retorna totais do sistema |
 | `GET` | `/admin/audit-logs` | `ADMIN` | retorna logs de auditoria com paginação |
+| `GET` | `/admin/audit-reports` | `ADMIN` | retorna relatório de auditoria com filtros avançados |
+| `GET` | `/admin/audit-reports/export` | `ADMIN` | exporta relatório de auditoria em CSV |
 
 ### `GET /admin/summary`
 
@@ -560,6 +556,23 @@ Query params disponíveis:
 
 - `page`
 - `limit`
+
+### `GET /admin/audit-reports`
+
+Query params disponíveis:
+
+- `page`
+- `limit`
+- `search`
+- `action`
+- `entityType`
+- `actorId`
+- `startDate`
+- `endDate`
+
+### `GET /admin/audit-reports/export`
+
+Usa os mesmos filtros de `GET /admin/audit-reports` e retorna um arquivo CSV para download.
 
 ## Regras de Negócio Importantes
 
