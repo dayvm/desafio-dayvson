@@ -430,41 +430,6 @@ export default function ProdutosUigovpePage() {
                     }}
                   />
                 }
-                footer={
-                  <FlexContainer direction="row" justify="between" align="center" gap="2" wrap="wrap">
-                    <Button
-                      rounded
-                      outlined
-                      severity="secondary"
-                      icon={<Icon icon="favorite" />}
-                      aria-label={`Favoritar ${product.name}`}
-                      onClick={() => handleFavorite(product)}
-                    />
-
-                    {canManage ? (
-                      <FlexContainer direction="row" gap="2" align="center">
-                        <Button
-                          rounded
-                          outlined
-                          severity="secondary"
-                          icon={<Icon icon="edit" />}
-                          aria-label={`Editar ${product.name}`}
-                          onClick={() => openEditDialog(product)}
-                        />
-                        <Button
-                          rounded
-                          outlined
-                          severity="danger"
-                          icon={<Icon icon="delete" />}
-                          aria-label={`Excluir ${product.name}`}
-                          onClick={() => setDeletingProduct(product)}
-                        />
-                      </FlexContainer>
-                    ) : (
-                      <Tag value="Somente leitura" severity="secondary" icon="visibility" />
-                    )}
-                  </FlexContainer>
-                }
               >
                 <FlexContainer direction="col" gap="4">
                   <FlexContainer direction="col" gap="2">
@@ -494,6 +459,40 @@ export default function ProdutosUigovpePage() {
                   {product.owner?.name ? (
                     <Tag value={product.owner.name} severity="secondary" icon="person" />
                   ) : null}
+
+                  <FlexContainer direction="row" justify="between" align="center" gap="2" wrap="wrap">
+                    <Button
+                      label="Favoritar"
+                      outlined
+                      severity="secondary"
+                      icon={<Icon icon="favorite" />}
+                      aria-label={`Favoritar ${product.name}`}
+                      onClick={() => handleFavorite(product)}
+                    />
+
+                    {canManage ? (
+                      <FlexContainer direction="row" gap="2" align="center" wrap="wrap">
+                        <Button
+                          label="Editar"
+                          outlined
+                          severity="secondary"
+                          icon={<Icon icon="edit" />}
+                          aria-label={`Editar ${product.name}`}
+                          onClick={() => openEditDialog(product)}
+                        />
+                        <Button
+                          label="Excluir"
+                          outlined
+                          severity="danger"
+                          icon={<Icon icon="delete" />}
+                          aria-label={`Excluir ${product.name}`}
+                          onClick={() => setDeletingProduct(product)}
+                        />
+                      </FlexContainer>
+                    ) : (
+                      <Tag value="Somente leitura" severity="secondary" icon="visibility" />
+                    )}
+                  </FlexContainer>
                 </FlexContainer>
               </Card>
             );
